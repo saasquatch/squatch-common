@@ -1,6 +1,7 @@
 package saasquatch.common.json;
 
 import java.util.function.Function;
+import java.util.stream.Collector;
 import javax.annotation.Nonnull;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -9,6 +10,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
 public class RSJackson {
+
+  /**
+   * A {@link Collector} that collects {@link JsonNode}s into an {@link ArrayNode}
+   */
+  public static <T extends JsonNode> Collector<T, ?, ArrayNode> toArrayNode() {
+    return Collector.of(JsonNodeFactory.instance::arrayNode, ArrayNode::add,
+        (a1, a2) -> {
+          a1.addAll(a2);
+          return a1;
+        });
+  }
 
   /**
    * Mutate each value/leaf node. Note that this method does not modify the original

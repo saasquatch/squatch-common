@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-public class RSHttpUtil {
+public class RSHttpUtils {
 
   private static final String BASIC_PREFIX = "Basic ";
   private static final String BEARER_PREFIX = "Bearer ";
@@ -84,7 +84,7 @@ public class RSHttpUtil {
     if (acceptEncoding == null || acceptEncoding.isEmpty())
       return Collections.emptySet();
     return acceptEncoding.stream()
-        .map(RSHttpUtil::getAcceptedEncodings)
+        .map(RSHttpUtils::getAcceptedEncodings)
         .flatMap(Collection::stream)
         .collect(Collectors.toSet());
   }
