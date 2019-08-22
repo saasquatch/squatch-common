@@ -22,8 +22,7 @@ public class RSFuturesTests {
       final List<CompletionStage<Integer>> promiseList = intList.stream()
           .map(i -> {
             final CompletableFuture<Integer> delayed = new CompletableFuture<>();
-            scheduledExecutor.schedule(() -> delayed.complete(i),
-                intList.size() - 1 - i, TimeUnit.MILLISECONDS);
+            scheduledExecutor.schedule(() -> delayed.complete(i), i, TimeUnit.MILLISECONDS);
             return delayed;
           })
           .collect(Collectors.toList());
