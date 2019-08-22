@@ -146,14 +146,12 @@ public class RSThrowables {
     @Override
     public Spliterator<Throwable> spliterator() {
       return Spliterators.spliteratorUnknownSize(iterator(),
-          CauseChainIterator.SPLITERATOR_CHARACTERISTICS);
+          Spliterator.NONNULL | Spliterator.ORDERED);
     }
 
   }
 
   private static class CauseChainIterator implements Iterator<Throwable> {
-
-    static final int SPLITERATOR_CHARACTERISTICS = Spliterator.NONNULL | Spliterator.ORDERED;
 
     private int count = 0;
     private Throwable next;
