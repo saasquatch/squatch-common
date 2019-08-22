@@ -29,17 +29,18 @@ public class RSHttpUtils {
     return Optional.ofNullable(authorizationHeader)
         .filter(s -> s.startsWith(BASIC_PREFIX))
         .map(s -> s.substring(BASIC_PREFIX.length()))
-        .map(t -> {
+        .map(s -> {
           try {
-            return Base64.getDecoder().decode(t);
+            return Base64.getDecoder().decode(s);
           } catch (IllegalArgumentException e) {
             return null; // invalid base64
           }
-        }).map(b -> new String(b, UTF_8))
+        })
+        .map(bytes -> new String(bytes, UTF_8))
         .filter(s -> s.contains(":"))
         .map(s -> s.split(":", 2))
-        .filter(t -> t.length == 2)
-        .map(t -> new SimpleImmutableEntry<>(t[0], t[1]));
+        .filter(tokens -> tokens.length == 2)
+        .map(tokens -> new SimpleImmutableEntry<>(tokens[0], tokens[1]));
   }
 
   public static Optional<String> getBearerAuth(@Nullable String authorizationHeader) {

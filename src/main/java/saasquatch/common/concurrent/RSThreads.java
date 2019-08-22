@@ -5,8 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import saasquatch.common.base.RSThrowables;
 
-public class RSThreadPools {
-  private static final Logger logger = LoggerFactory.getLogger(RSThreadPools.class);
+public class RSThreads {
+  private static final Logger logger = LoggerFactory.getLogger(RSThreads.class);
 
   private static Field threadLocalsField;
 

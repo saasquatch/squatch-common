@@ -7,6 +7,7 @@ package saasquatch.common.base;
 public class RSStrings {
 
   /**
+   * Truncate a String to fit a UTF-8 bytes size.<br>
    * Source:
    * https://stackoverflow.com/questions/119328/how-do-i-truncate-a-java-string-to-fit-in-a-given-number-of-bytes-once-utf-8-en
    */

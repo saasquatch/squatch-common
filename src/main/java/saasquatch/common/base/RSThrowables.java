@@ -6,50 +6,80 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 
 /**
- * Utils for {@link Throwable}s.
+ * Utilities for {@link Throwable}s.
  *
  * @author sli
  */
 public class RSThrowables {
 
+  static final int DEFAULT_CAUSE_CHAIN_LIMIT = 100;
+
   /**
    * Convenience method for {@link #getCauseChain(Throwable)}
    */
-  public static List<Throwable> getCauseChainAsList(@Nonnull Throwable t) {
+  public static List<Throwable> getCauseChainList(@Nonnull Throwable t) {
+    return getCauseChainList(t, DEFAULT_CAUSE_CHAIN_LIMIT);
+  }
+
+  /**
+   * Convenience method for {@link #getCauseChain(Throwable, int)}
+   */
+  public static List<Throwable> getCauseChainList(@Nonnull Throwable t, int limit) {
     final ArrayList<Throwable> result = new ArrayList<>();
-    getCauseChain(t).forEach(result::add);
+    getCauseChain(t, limit).forEach(result::add);
     result.trimToSize();
     return Collections.unmodifiableList(result);
   }
 
   /**
    * Get the cause chain with limit 100.
+   */
+  public static Stream<Throwable> getCauseChainStream(@Nonnull Throwable t) {
+    return getCauseChainStream(t, DEFAULT_CAUSE_CHAIN_LIMIT);
+  }
+
+  /**
+   * Get the cause chain as a {@link Stream}
    *
    * @param t
+   * @param limit the limit for the cause chain. 0 for unlimited.
    * @return
    */
+  public static Stream<Throwable> getCauseChainStream(@Nonnull Throwable t, int limit) {
+    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+        new CauseChainIterator(t, limit), CauseChainIterator.SPLITERATOR_CHARACTERISTICS), false);
+  }
+
+  /**
+   * Get the cause chain with limit 100.
+   */
   public static Iterable<Throwable> getCauseChain(@Nonnull Throwable t) {
-    return getCauseChain(t, 100);
+    return getCauseChain(t, DEFAULT_CAUSE_CHAIN_LIMIT);
   }
 
   /**
    * Get the cause chain with an arbitrary limit.
    *
    * @param t
-   * @param limit The limit for the cause chain. -1 for unlimited.
+   * @param limit The limit for the cause chain. 0 for unlimited.
    */
   public static Iterable<Throwable> getCauseChain(@Nonnull Throwable t, int limit) {
     if (limit < 0) {
       throw new IllegalArgumentException("Negative limit");
     }
-    return () -> new CauseIterator(t, limit);
+    return new CauseChainIterable(t, limit);
   }
 
   /**
    * Find the first Throwable in the cause chain that is an instance of the given exception class.
+   *
    * @see #getCauseChain(Throwable)
    */
   public static <X extends Exception> X findFirstInCauseChain(@Nonnull Throwable t,
@@ -103,21 +133,46 @@ public class RSThrowables {
     throw new RuntimeException(t);
   }
 
-  private static class CauseIterator implements Iterator<Throwable> {
+  private static class CauseChainIterable implements Iterable<Throwable> {
 
-    private int currIdx = 0;
+    private final Throwable t;
+    private final int limit;
+
+    CauseChainIterable(Throwable t, int limit) {
+      this.t = t;
+      this.limit = limit;
+    }
+
+    @Override
+    public Iterator<Throwable> iterator() {
+      return new CauseChainIterator(t, limit);
+    }
+
+    @Override
+    public Spliterator<Throwable> spliterator() {
+      return Spliterators.spliteratorUnknownSize(iterator(),
+          CauseChainIterator.SPLITERATOR_CHARACTERISTICS);
+    }
+
+  }
+
+  private static class CauseChainIterator implements Iterator<Throwable> {
+
+    static final int SPLITERATOR_CHARACTERISTICS = Spliterator.NONNULL | Spliterator.ORDERED;
+
+    private int count = 0;
     private Throwable next;
     private Throwable curr;
     private final int limit;
 
-    public CauseIterator(Throwable t, int limit) {
+    CauseChainIterator(Throwable t, int limit) {
       this.next = t;
       this.limit = limit == 0 ? Integer.MAX_VALUE : limit;
     }
 
     @Override
     public boolean hasNext() {
-      if (currIdx >= limit) {
+      if (count >= limit) {
         return false;
       }
       return next != null && !next.equals(curr);
@@ -125,7 +180,7 @@ public class RSThrowables {
 
     @Override
     public Throwable next() {
-      currIdx++;
+      count++;
       curr = next;
       next = next.getCause();
       return curr;
