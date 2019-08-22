@@ -162,12 +162,12 @@ public class RSThrowables {
 
     CauseChainIterator(Throwable t, int limit) {
       this.next = t;
-      this.limit = limit == 0 ? Integer.MAX_VALUE : limit;
+      this.limit = limit;
     }
 
     @Override
     public boolean hasNext() {
-      if (count >= limit) {
+      if (limit > 0 && count >= limit) {
         return false;
       }
       return next != null && !next.equals(curr);
