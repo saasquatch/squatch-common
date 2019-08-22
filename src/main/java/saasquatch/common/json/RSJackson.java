@@ -9,6 +9,11 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
+/**
+ * Utilities for Jackson.
+ *
+ * @author sli
+ */
 public class RSJackson {
 
   /**
