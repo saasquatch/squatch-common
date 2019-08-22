@@ -23,6 +23,17 @@ public class RSJackson {
   }
 
   /**
+   * Create an {@link ArrayNode} with the given {@link JsonNode}s.
+   */
+  public static ArrayNode arrayNodeOf(JsonNode... nodes) {
+    final ArrayNode result = JsonNodeFactory.instance.arrayNode();
+    for (JsonNode node : nodes) {
+      result.add(node);
+    }
+    return result;
+  }
+
+  /**
    * Mutate each value/leaf node. Note that this method does not modify the original
    * {@link JsonNode}.
    *
