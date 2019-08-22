@@ -2,8 +2,6 @@ package saasquatch.common.base;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
@@ -32,10 +30,8 @@ public class RSThrowables {
    * Convenience method for {@link #getCauseChain(Throwable, int)}
    */
   public static List<Throwable> getCauseChainList(@Nonnull Throwable t, int limit) {
-    final ArrayList<Throwable> result = new ArrayList<>();
-    getCauseChain(t, limit).forEach(result::add);
-    result.trimToSize();
-    return Collections.unmodifiableList(result);
+    return getCauseChainStream(t, limit)
+        .collect(RSCollectors.toUnmodifiableList());
   }
 
   /**
@@ -53,8 +49,7 @@ public class RSThrowables {
    * @return
    */
   public static Stream<Throwable> getCauseChainStream(@Nonnull Throwable t, int limit) {
-    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-        new CauseChainIterator(t, limit), CauseChainIterator.SPLITERATOR_CHARACTERISTICS), false);
+    return StreamSupport.stream(getCauseChain(t, limit).spliterator(), false);
   }
 
   /**
@@ -84,12 +79,11 @@ public class RSThrowables {
    */
   public static <X extends Exception> X findFirstInCauseChain(@Nonnull Throwable t,
       Class<? extends X> exceptionClass) {
-    for (final Throwable curr : getCauseChain(t)) {
-      if (exceptionClass.isInstance(curr)) {
-        return exceptionClass.cast(curr);
-      }
-    }
-    return null;
+    return getCauseChainStream(t)
+        .filter(exceptionClass::isInstance)
+        .map(exceptionClass::cast)
+        .findFirst()
+        .orElse(null);
   }
 
   /**
@@ -97,11 +91,12 @@ public class RSThrowables {
    * Example usage:
    *
    * <pre>
-   * void foo() throws IOException {
+   * void foo() throws IOException, ParseException {
    *   try {
    *     // ...
    *   } catch (RuntimeException e) {
    *     unwrapAndThrow(e, IOException.class);
+   *     unwrapAndThrow(e, ParseException.class);
    *     throw e;
    *   }
    * }
