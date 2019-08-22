@@ -19,11 +19,11 @@ public class RSFuturesTests {
       final List<Integer> intList = ThreadLocalRandom.current().ints(1000, 0, 1000)
           .boxed()
           .collect(Collectors.toList());
-      final List<CompletionStage<Integer>> promiseList =
-          intList.stream()
+      final List<CompletionStage<Integer>> promiseList = intList.stream()
           .map(i -> {
             final CompletableFuture<Integer> delayed = new CompletableFuture<>();
-            scheduledExecutor.schedule(() -> delayed.complete(i), i, TimeUnit.MILLISECONDS);
+            scheduledExecutor.schedule(() -> delayed.complete(i),
+                intList.size() - 1 - i, TimeUnit.MILLISECONDS);
             return delayed;
           })
           .collect(Collectors.toList());
