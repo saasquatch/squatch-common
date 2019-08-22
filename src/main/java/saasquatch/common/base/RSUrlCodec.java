@@ -47,7 +47,7 @@ public final class RSUrlCodec {
    * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
    * URLEncoder does by default.
    */
-  public static String encodeFormData(@Nonnull String s) {
+  public static String encodeForm(@Nonnull String s) {
     return encode(s, WWW_FORM_URL, true);
   }
 

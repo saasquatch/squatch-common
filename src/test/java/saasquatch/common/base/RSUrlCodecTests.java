@@ -86,11 +86,11 @@ public class RSUrlCodecTests {
   }
 
   @Test
-  public void testUrlFormCompatibility() throws Exception {
+  public void testFormCompatibility() throws Exception {
     for (int i = 0; i < 1024; i++) {
       final byte[] bytes = randomBytes(1024);
       final String fakeString = new String(bytes, UTF_8);
-      final String ourEncoded = RSUrlCodec.encodeFormData(fakeString);
+      final String ourEncoded = RSUrlCodec.encodeForm(fakeString);
       final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
       assertEquals(javaEncoded, ourEncoded);
     }
