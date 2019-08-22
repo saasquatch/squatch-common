@@ -5,9 +5,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.BitSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.IntPredicate;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
@@ -38,17 +38,16 @@ public class RSUrlCodecTests {
   public void testRandom() throws Exception {
     for (int i = 0; i < 100; i++) {
       final String original = new String(randomBytes(800), UTF_8);
-      final String randomSafeCharsStr = RandomStringUtils.randomAlphanumeric(12);
-      final BitSet randomSafeChars = new BitSet(256);
-      randomSafeCharsStr.chars().forEach(randomSafeChars::set);
+      final String randomSafeChars = RandomStringUtils.randomAlphanumeric(12);
+      final IntPredicate pred = c -> randomSafeChars.indexOf(c) >= 0;
       assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encodeStandard(original)));
       assertEquals(original,
-          RSUrlCodec.decode(RSUrlCodec.encode(original, randomSafeChars, false)));
-      assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encode(original, randomSafeChars, true)));
+          RSUrlCodec.decode(RSUrlCodec.encode(original, pred, false)));
+      assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encode(original, pred, true)));
       assertEquals(original,
-          URLDecoder.decode(RSUrlCodec.encode(original, randomSafeChars, false), UTF_8.name()));
+          URLDecoder.decode(RSUrlCodec.encode(original, pred, false), UTF_8.name()));
       assertEquals(original,
-          URLDecoder.decode(RSUrlCodec.encode(original, randomSafeChars, true), UTF_8.name()));
+          URLDecoder.decode(RSUrlCodec.encode(original, pred, true), UTF_8.name()));
     }
   }
 

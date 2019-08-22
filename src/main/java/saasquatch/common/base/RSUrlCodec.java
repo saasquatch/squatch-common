@@ -4,8 +4,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.BitSet;
 import java.util.Objects;
+import java.util.function.IntPredicate;
 import javax.annotation.Nonnull;
 
 /**
@@ -18,37 +18,12 @@ import javax.annotation.Nonnull;
  */
 public final class RSUrlCodec {
 
-  // BitSet is mutable. DO NOT MODIFY THEM!!!
-
-  /**
-   * RFC 3986 unreserved characters.
-   */
-  private static final BitSet UNRESERVED = new BitSet(256);
-  static {
-    UNRESERVED.set('a', 'z' + 1);
-    UNRESERVED.set('A', 'Z' + 1);
-    UNRESERVED.set('0', '9' + 1);
-    "-_.~".chars().forEach(UNRESERVED::set);
-  }
-
-  /**
-   * www-form-url safe characters.
-   */
-  private static final BitSet WWW_FORM_URL = new BitSet(256);
-  static {
-    WWW_FORM_URL.set('a', 'z' + 1);
-    WWW_FORM_URL.set('A', 'Z' + 1);
-    WWW_FORM_URL.set('0', '9' + 1);
-    // special chars
-    "-_.*".chars().forEach(WWW_FORM_URL::set);
-  }
-
   /**
    * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
    * URLEncoder does by default.
    */
   public static String encodeForm(@Nonnull String s) {
-    return encode(s, WWW_FORM_URL, true);
+    return encode(s, RSUrlCodec::isWwwFormUrlSafe, true);
   }
 
   /**
@@ -57,20 +32,20 @@ public final class RSUrlCodec {
    * standard came out in 2005, way after URLEncoder was written.
    */
   public static String encodeStandard(@Nonnull String s) {
-    return encode(s, UNRESERVED, false);
+    return encode(s, RSUrlCodec::isStandardUnreseved, false);
   }
 
   /**
    * URL encode all characters except for the specified chars.
    */
-  public static String encode(@Nonnull final String s, @Nonnull final BitSet safeChars,
-      final boolean spaceToPlus) {
+  public static String encode(@Nonnull String s, @Nonnull IntPredicate safeCharsPredicate,
+      boolean spaceToPlus) {
     Objects.requireNonNull(s);
     final ByteBuffer bytes = UTF_8.encode(s);
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
     while (bytes.hasRemaining()) {
       final int b = bytes.get() & 0xff;
-      if (safeChars.get(b)) {
+      if (safeCharsPredicate.test(b)) {
         buf.append((char) b);
       } else if (spaceToPlus && b == ' ') {
         buf.append('+');
@@ -122,6 +97,18 @@ public final class RSUrlCodec {
           "Invalid URL encoding: not a valid digit (radix 16): " + b);
     }
     return i;
+  }
+
+  private static boolean isAsciiAlphaNum(int c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
+  }
+
+  private static boolean isWwwFormUrlSafe(int c) {
+    return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '*';
+  }
+
+  private static boolean isStandardUnreseved(int c) {
+    return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '~';
   }
 
 }
