@@ -1,8 +1,12 @@
 package saasquatch.common.base;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import org.junit.Test;
 
 public class RSThrowablesTests {
@@ -25,6 +29,25 @@ public class RSThrowablesTests {
     // We shouldn't get an infinite loop
     final List<Throwable> causeChain = RSThrowables.getCauseChainList(fakeException);
     assertEquals(RSThrowables.DEFAULT_CAUSE_CHAIN_LIMIT, causeChain.size());
+  }
+
+  @Test
+  public void testUnwrapAndThrow() {
+    final String msg = "fake message";
+    final Runnable throwingRunnable = () -> {
+      throw new RuntimeException(
+          new CompletionException(new UncheckedIOException(new IOException(msg))));
+    };
+    try {
+      throwingRunnable.run();
+    } catch (RuntimeException e) {
+      try {
+        RSThrowables.unwrapAndThrow(e, IOException.class);
+        fail("IOException not thrown");
+      } catch (IOException expected) {
+        assertEquals(msg, expected.getMessage());
+      }
+    }
   }
 
   /**
