@@ -81,7 +81,7 @@ public class RSJackson {
     return j.size() == 0;
   }
 
-  public static boolean isNotEmpty(JsonNode j) {
+  public static boolean nonEmpty(JsonNode j) {
     return !isEmpty(j);
   }
 
