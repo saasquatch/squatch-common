@@ -6,8 +6,10 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -76,7 +78,8 @@ public final class RSCollectors {
   }
 
   /**
-   * {@link Collector} that collects elements into an unmodifiable {@link SortedSet}.
+   * {@link Collector} that collects elements into an unmodifiable {@link SortedSet}. If the result
+   * is empty, then your {@link Set} will not be used.
    */
   public static <T, S extends SortedSet<T>> Collector<T, ?, SortedSet<T>> toUnmodifiableSortedSet(
       @Nonnull final Supplier<S> sortedSetSupplier) {
@@ -92,7 +95,8 @@ public final class RSCollectors {
   }
 
   /**
-   * {@link Collector} that collects elements into an unmodifiable {@link NavigableSet}.
+   * {@link Collector} that collects elements into an unmodifiable {@link NavigableSet}. If the
+   * result is empty, then your {@link Set} will not be used.
    */
   public static <T, S extends NavigableSet<T>> Collector<T, ?, NavigableSet<T>> toUnmodifiableNavigableSet(
       @Nonnull final Supplier<S> navigableSetSupplier) {
@@ -125,6 +129,7 @@ public final class RSCollectors {
    * {@link Map} will not be used.
    *
    * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
+   * @see #throwingMerger()
    */
   public static <T, K, U, M extends Map<K, U>> Collector<T, ?, Map<K, U>> toUnmodifiableMap(
       @Nonnull final Function<? super T, ? extends K> keyMapper,
@@ -145,6 +150,62 @@ public final class RSCollectors {
       @Nonnull final Class<K> clazz) {
     return toUnmodifiableMap(keyMapper, valueMapper, throwingMerger(),
         () -> new EnumMap<>(clazz));
+  }
+
+  /**
+   * {@link Collector} that collects elements into an unmodifiable {@link SortedMap}. If the result
+   * is empty, then your {@link Map} will not be used.
+   *
+   * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
+   * @see #throwingMerger()
+   */
+  public static <T, K, U, M extends SortedMap<K, U>> Collector<T, ?, SortedMap<K, U>> toUnmodifiableSortedMap(
+      @Nonnull final Function<? super T, ? extends K> keyMapper,
+      @Nonnull final Function<? super T, ? extends U> valueMapper,
+      @Nonnull final BinaryOperator<U> mergeFunction, @Nonnull final Supplier<M> mapSupplier) {
+    return Collectors.collectingAndThen(
+        Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier),
+        m -> {
+          switch (m.size()) {
+            case 0:
+              return Collections.emptySortedMap();
+            default:
+              return Collections.unmodifiableSortedMap(m);
+          }
+        });
+  }
+
+  /**
+   * {@link Collector} that collects elements into an unmodifiable {@link NavigableMap}. If the
+   * result is empty, then your {@link Map} will not be used.
+   *
+   * @see Collectors#toMap(Function, Function, BinaryOperator, Supplier)
+   * @see #throwingMerger()
+   */
+  public static <T, K, U, M extends NavigableMap<K, U>> Collector<T, ?, NavigableMap<K, U>> toUnmodifiableNavigableMap(
+      @Nonnull final Function<? super T, ? extends K> keyMapper,
+      @Nonnull final Function<? super T, ? extends U> valueMapper,
+      @Nonnull final BinaryOperator<U> mergeFunction, @Nonnull final Supplier<M> mapSupplier) {
+    return Collectors.collectingAndThen(
+        Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier),
+        m -> {
+          switch (m.size()) {
+            case 0:
+              return Collections.emptyNavigableMap();
+            default:
+              return Collections.unmodifiableNavigableMap(m);
+          }
+        });
+  }
+
+  /**
+   * Stolen from {@link Collectors} and made public. Used as the mergerFunction in {@link Map}
+   * collectors.
+   */
+  public static <T> BinaryOperator<T> throwingMerger() {
+    return (u, v) -> {
+      throw new IllegalStateException("Duplicate key " + u);
+    };
   }
 
   private static <T> Set<T> unmodifiableSetFinisher(@Nonnull final Set<T> s) {
@@ -169,15 +230,6 @@ public final class RSCollectors {
       default:
         return Collections.unmodifiableMap(m);
     }
-  }
-
-  /**
-   * Stolen from {@link Collectors} and made public.
-   */
-  public static <T> BinaryOperator<T> throwingMerger() {
-    return (u, v) -> {
-      throw new IllegalStateException("Duplicate key " + u);
-    };
   }
 
 }
