@@ -58,7 +58,9 @@ public class RSThrowablesTests {
   }
 
   /**
-   * A fake Exception type where {@link #getCause()} always returns a new Exception.
+   * A fake Exception type where {@link #getCause()} always returns a new Exception to emulate an
+   * infinite loop.
+   *
    * @author sli
    */
   static class FakeCauseRuntimeException extends RuntimeException {
