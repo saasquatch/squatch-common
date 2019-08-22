@@ -64,7 +64,7 @@ public final class RSUrlCodec {
    * URL encode all characters except for the specified chars.
    */
   public static String encode(@Nonnull final String s, @Nonnull final BitSet safeChars,
-      final boolean blankAsPlus) {
+      final boolean spaceToPlus) {
     Objects.requireNonNull(s);
     final ByteBuffer bytes = UTF_8.encode(s);
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
@@ -72,7 +72,7 @@ public final class RSUrlCodec {
       final int b = bytes.get() & 0xff;
       if (safeChars.get(b)) {
         buf.append((char) b);
-      } else if (blankAsPlus && b == ' ') {
+      } else if (spaceToPlus && b == ' ') {
         buf.append('+');
       } else {
         buf.append('%');
