@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
-public class RSFuturesTests {
+public class RSFuturesTest {
 
   @Test
   public void testSequence() throws Exception {

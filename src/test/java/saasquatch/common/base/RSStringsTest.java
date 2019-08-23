@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
-public class RSStringsTests {
+public class RSStringsTest {
 
   @Test
   public void testUtf8Truncation() {

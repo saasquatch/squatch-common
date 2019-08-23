@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
-public class RSHttpHeadersTests {
+public class RSHttpHeadersTest {
 
   @Test
   public void testBasicAuth() {

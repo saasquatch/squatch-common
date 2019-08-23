@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import org.junit.Test;
 
-public class RSThrowablesTests {
+public class RSThrowablesTest {
 
   @Test
   public void testBasicCauseChain() {

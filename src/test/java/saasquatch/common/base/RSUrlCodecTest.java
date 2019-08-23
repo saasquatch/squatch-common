@@ -12,7 +12,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
-public class RSUrlCodecTests {
+public class RSUrlCodecTest {
 
   Random random = new Random();
 
