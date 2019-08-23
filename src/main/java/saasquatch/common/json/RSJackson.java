@@ -59,9 +59,7 @@ public final class RSJackson {
         newNode.add(mutateValueNodes(v, mutation));
       }
       return newNode;
-    } else if (json.isValueNode()) {
-      return mutation.apply((ValueNode) json);
-    } else {
+    } else if (json.isObject()) {
       final ObjectNode newNode = JsonNodeFactory.instance.objectNode();
       json.fields().forEachRemaining(e -> {
         final String k = e.getKey();
@@ -69,6 +67,11 @@ public final class RSJackson {
         newNode.set(k, mutateValueNodes(v, mutation));
       });
       return newNode;
+    } else if (json.isValueNode()) {
+      return mutation.apply((ValueNode) json);
+    } else {
+      throw new AssertionError(
+          String.format("Unrecognized node type[%s]: %s", json.getClass(), json));
     }
   }
 
@@ -99,6 +102,7 @@ public final class RSJackson {
   public static ObjectNode renameField(@Nonnull final ObjectNode json,
       @Nonnull final String oldName, @Nonnull final String newName) {
     final ObjectNode result = json.deepCopy();
+    if (!result.has(oldName)) return result;
     result.set(newName, result.path(oldName));
     result.remove(oldName);
     return result;

@@ -3,6 +3,9 @@ package saasquatch.common.json;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -11,12 +14,15 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class RSJacksonTest {
+
+  private final ObjectMapper mapper = new ObjectMapper();
 
   @Test
   public void testArrayNodeCreation() {
@@ -52,6 +58,65 @@ public class RSJacksonTest {
     final ArrayNode emptyArray = JsonNodeFactory.instance.arrayNode();
     assertFalse(RSJackson.isNull(emptyArray));
     assertTrue(RSJackson.isEmpty(emptyArray));
+  }
+
+  @Test
+  public void testMutateValueNode() {
+    final String baseDir = "testMutateValueNodes/";
+    // identity function
+    assertEquals(loadJson(baseDir + "result1.json"),
+        RSJackson.mutateValueNodes(loadJson(baseDir + "test1.json"), j -> j));
+    // Tuncate every String
+    assertEquals(loadJson(baseDir + "result2.json"),
+        RSJackson.mutateValueNodes(loadJson(baseDir + "test2.json"), j -> {
+          if (!j.isTextual()) return j;
+          final String textValue = j.textValue();
+          if (textValue.length() <= 5) return j;
+          return JsonNodeFactory.instance.textNode(textValue.substring(0, 5));
+        }));
+    // Multiple every integer by 2
+    assertEquals(loadJson(baseDir + "result3.json"),
+        RSJackson.mutateValueNodes(loadJson(baseDir + "test3.json"), j -> {
+          if (!j.isIntegralNumber()) return j;
+          final int intValue = j.intValue();
+          return JsonNodeFactory.instance.numberNode(intValue * 2);
+        }));
+  }
+
+  @Test
+  public void testRenameField() {
+    final ObjectNode obj = JsonNodeFactory.instance.objectNode()
+        .put("foo", "bar");
+    {
+      final ObjectNode renamed = RSJackson.renameField(obj, "fieldThatDoesNotExist", "bar");
+      assertEquals(obj, renamed);
+    }
+    {
+      final ObjectNode renamed = RSJackson.renameField(obj, "foo", "bar");
+      assertEquals(JsonNodeFactory.instance.objectNode().put("bar", "bar"), renamed);
+    }
+  }
+
+  @Test
+  public void testShallowMerge() {
+    final ObjectNode obj1 = JsonNodeFactory.instance.objectNode()
+        .put("one", 1).put("two", "two").put("three", 1);
+    final ObjectNode obj2 = JsonNodeFactory.instance.objectNode()
+        .put("two", 2).put("three", "three");
+    final ObjectNode obj3 = JsonNodeFactory.instance.objectNode()
+        .put("three", 3);
+
+    final ObjectNode expectedResult = JsonNodeFactory.instance.objectNode()
+        .put("one", 1).put("two", 2).put("three", 3);
+    assertEquals(expectedResult, RSJackson.shallowMerge(obj1, obj2, obj3));
+  }
+
+  private JsonNode loadJson(String fileName) {
+    try (InputStream in = this.getClass().getResourceAsStream(fileName)) {
+      return mapper.readTree(in);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private static List<JsonNode> generateJsonNodesList() {

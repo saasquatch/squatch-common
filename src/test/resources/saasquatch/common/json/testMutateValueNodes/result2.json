@@ -1,0 +1,58 @@
+[
+  {
+    "_id": "5d605",
+    "index": 0,
+    "guid": "f9b36",
+    "isActive": false,
+    "balance": "$2,29",
+    "picture": "http:",
+    "age": 31,
+    "eyeColor": "green",
+    "name": "Taylo",
+    "gender": "femal",
+    "company": "MAGMI",
+    "email": "taylo",
+    "phone": "+1 (8",
+    "address": "676 B",
+    "about": "Aliqu",
+    "registered": "2017-",
+    "latitude": 49.275451,
+    "longitude": 137.515163,
+    "tags": ["dolor", "tempo", "incid", "adipi", "aliqu", "excep", "esse"],
+    "friends": [
+      { "id": 0, "name": "Joyne" },
+      { "id": 1, "name": "Shann" },
+      { "id": 2, "name": "Esper" }
+    ],
+    "greeting": "Hello",
+    "favoriteFruit": "apple"
+  },
+  {
+    "_id": "5d605",
+    "index": 1,
+    "guid": "3adf6",
+    "isActive": false,
+    "balance": "$3,28",
+    "picture": "http:",
+    "age": 31,
+    "eyeColor": "brown",
+    "name": "Meyer",
+    "gender": "male",
+    "company": "QUINE",
+    "email": "meyer",
+    "phone": "+1 (8",
+    "address": "314 P",
+    "about": "Lorem",
+    "registered": "2018-",
+    "latitude": -64.22012,
+    "longitude": 34.013258,
+    "tags": ["duis", "ea", "proid", "ullam", "ex", "aute", "venia"],
+    "friends": [
+      { "id": 0, "name": "Vasqu" },
+      { "id": 1, "name": "Hardi" },
+      { "id": 2, "name": "Camer" }
+    ],
+    "greeting": "Hello",
+    "favoriteFruit": "straw"
+  }
+]
