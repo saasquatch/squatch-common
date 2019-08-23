@@ -6,15 +6,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntPredicate;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 public class RSUrlCodecTest {
-
-  Random random = new Random();
 
   @Test
   public void testRandomAlphanumeric() {
@@ -97,7 +95,7 @@ public class RSUrlCodecTest {
 
   private byte[] randomBytes(int count) {
     final byte[] result = new byte[count];
-    random.nextBytes(result);
+    ThreadLocalRandom.current().nextBytes(result);
     return result;
   }
 
