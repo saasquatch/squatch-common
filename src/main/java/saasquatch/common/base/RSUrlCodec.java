@@ -18,6 +18,8 @@ import javax.annotation.Nonnull;
  */
 public final class RSUrlCodec {
 
+  private RSUrlCodec() {}
+
   /**
    * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
    * URLEncoder does by default.

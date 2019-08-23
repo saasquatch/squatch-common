@@ -4,7 +4,9 @@ package saasquatch.common.base;
  * Utilities for strings
  * @author sli
  */
-public class RSStrings {
+public final class RSStrings {
+
+  private RSStrings() {}
 
   /**
    * Truncate a String to fit a UTF-8 bytes size.<br>

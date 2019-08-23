@@ -13,10 +13,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-public class RSHttpHeaders {
+public final class RSHttpHeaders {
 
   private static final String BASIC_PREFIX = "Basic ";
   private static final String BEARER_PREFIX = "Bearer ";
+
+  private RSHttpHeaders() {}
 
   /**
    * Parses basic authorization header for username/password

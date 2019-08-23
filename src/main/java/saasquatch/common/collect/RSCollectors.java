@@ -25,6 +25,8 @@ import javax.annotation.Nonnull;
  */
 public final class RSCollectors {
 
+  private RSCollectors() {}
+
   /**
    * {@link Collector} that collects elements into an unmodifiable {@link List}.
    *

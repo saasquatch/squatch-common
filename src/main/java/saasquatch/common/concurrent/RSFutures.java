@@ -14,7 +14,9 @@ import saasquatch.common.collect.RSCollectors;
  *
  * @author sli
  */
-public class RSFutures {
+public final class RSFutures {
+
+  private RSFutures() {}
 
   /**
    * Convert a {@link Collection} of {@link CompletionStage}s into a

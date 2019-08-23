@@ -16,9 +16,11 @@ import saasquatch.common.collect.RSCollectors;
  *
  * @author sli
  */
-public class RSThrowables {
+public final class RSThrowables {
 
   static final int DEFAULT_CAUSE_CHAIN_LIMIT = 100;
+
+  private RSThrowables() {}
 
   /**
    * Convenience method for {@link #getCauseChain(Throwable)}

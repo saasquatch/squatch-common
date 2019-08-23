@@ -11,8 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import saasquatch.common.base.RSThrowables;
 
-public class RSThreads {
+public final class RSThreads {
   private static final Logger logger = LoggerFactory.getLogger(RSThreads.class);
+
+  private RSThreads() {}
 
   private static Field threadLocalsField;
 

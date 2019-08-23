@@ -14,7 +14,9 @@ import com.fasterxml.jackson.databind.node.ValueNode;
  *
  * @author sli
  */
-public class RSJackson {
+public final class RSJackson {
+
+  private RSJackson() {}
 
   /**
    * A {@link Collector} that collects {@link JsonNode}s into an {@link ArrayNode}
