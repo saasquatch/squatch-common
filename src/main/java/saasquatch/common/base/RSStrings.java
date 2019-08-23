@@ -19,7 +19,7 @@ public class RSStrings {
       final char c = s.charAt(i);
       // ranges from http://en.wikipedia.org/wiki/UTF-8
       int skip = 0;
-      int more;
+      final int more;
       if (c <= 0x007f) {
         more = 1;
       } else if (c <= 0x07FF) {
