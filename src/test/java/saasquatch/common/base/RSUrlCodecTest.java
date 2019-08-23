@@ -26,8 +26,8 @@ public class RSUrlCodecTest {
   @Test
   public void testReserved() throws Exception {
     final String reserved = "! # $ & ' ( ) * + , / : ; = ? @ [ ]";
-    final String expected =
-        "%21%20%23%20%24%20%26%20%27%20%28%20%29%20%2A%20%2B%20%2C%20%2F%20%3A%20%3B%20%3D%20%3F%20%40%20%5B%20%5D";
+    final String expected = "%21%20%23%20%24%20%26%20%27%20%28%20%29%20%2A%20%2B%20%2C%20"
+        + "%2F%20%3A%20%3B%20%3D%20%3F%20%40%20%5B%20%5D";
     assertEquals(expected, RSUrlCodec.encodeStandard(reserved));
     assertEquals(reserved, RSUrlCodec.decode(expected));
     assertEquals(reserved, URLDecoder.decode(expected, UTF_8.name()));
@@ -40,8 +40,7 @@ public class RSUrlCodecTest {
       final String randomSafeChars = RandomStringUtils.randomAlphanumeric(12);
       final IntPredicate pred = c -> randomSafeChars.indexOf(c) >= 0;
       assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encodeStandard(original)));
-      assertEquals(original,
-          RSUrlCodec.decode(RSUrlCodec.encode(original, pred, false)));
+      assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encode(original, pred, false)));
       assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encode(original, pred, true)));
       assertEquals(original,
           URLDecoder.decode(RSUrlCodec.encode(original, pred, false), UTF_8.name()));
