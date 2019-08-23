@@ -36,16 +36,23 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL encode all characters except for the specified chars.
+   * URL encode all chars except for the safe chars.
+   *
+   * @param s the input String
+   * @param isSafeChar a predicate that returns true if the input is considered safe and shouldn't
+   *        be encoded
+   * @param spaceToPlus whether ' ' should be turned into '+'. Note that isSafeChar takes precedence
+   *        over spaceToPlus.
+   * @return
    */
-  public static String encode(@Nonnull String s, @Nonnull IntPredicate safeCharsPredicate,
+  public static String encode(@Nonnull String s, @Nonnull IntPredicate isSafeChar,
       boolean spaceToPlus) {
     Objects.requireNonNull(s);
     final ByteBuffer bytes = UTF_8.encode(s);
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
     while (bytes.hasRemaining()) {
       final int b = bytes.get() & 0xff;
-      if (safeCharsPredicate.test(b)) {
+      if (isSafeChar.test(b)) {
         buf.append((char) b);
       } else if (spaceToPlus && b == ' ') {
         buf.append('+');
@@ -61,11 +68,21 @@ public final class RSUrlCodec {
     return buf.toString();
   }
 
+  /**
+   * Convenience method for {@code decode(s, true)}
+   */
   public static String decode(@Nonnull String s) {
     // We want to decode plus to space by default
     return decode(s, true);
   }
 
+  /**
+   * URL decode
+   *
+   * @param s the input String
+   * @param plusToSpace whether '+' should be turned into ' '
+   * @return
+   */
   public static String decode(@Nonnull String s, boolean plusToSpace) {
     Objects.requireNonNull(s);
     final ByteBuffer bytes = UTF_8.encode(s);

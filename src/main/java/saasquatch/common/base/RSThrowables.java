@@ -166,10 +166,9 @@ public class RSThrowables {
 
     @Override
     public boolean hasNext() {
-      if (limit > 0 && count >= limit) {
+      if (limit > 0 && count >= limit)
         return false;
-      }
-      return next != null && !next.equals(curr);
+      return next != null && next != curr && !next.equals(curr);
     }
 
     @Override
