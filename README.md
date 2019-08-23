@@ -10,7 +10,7 @@ squatch-common is hosted on [JitPack](https://jitpack.io).
 
 Add JitPack repository:
 
-```
+```xml
 <repositories>
   <repository>
     <id>jitpack.io</id>
@@ -21,7 +21,7 @@ Add JitPack repository:
 
 Add the dependency:
 
-```
+```xml
 <dependency>
   <groupId>com.github.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
