@@ -29,6 +29,14 @@ public class RSCollectorsTest {
   }
 
   @Test
+  public void testSingletonList() {
+    final List<Object> collect = Stream.of(1)
+        .collect(RSCollectors.toUnmodifiableList());
+    assertEquals("We should be getting a SingletonList", "SingletonList",
+        collect.getClass().getSimpleName());
+  }
+
+  @Test
   public void testEmptySet() {
     {
       final Set<Object> collect = Stream.empty()
@@ -42,6 +50,23 @@ public class RSCollectorsTest {
           collect == Collections.emptySet());
     }
   }
+
+  @Test
+  public void testSingletonSet() {
+    {
+      final Set<Object> collect = Stream.of(1)
+          .collect(RSCollectors.toUnmodifiableSet());
+      assertEquals("We should be getting a SingletonSet", "SingletonSet",
+          collect.getClass().getSimpleName());
+    }
+    {
+      final Set<Object> collect = Stream.of(1)
+          .collect(RSCollectors.toUnmodifiableSet(LinkedHashSet::new));
+      assertEquals("We should be getting a SingletonSet even with a custom Set", "SingletonSet",
+          collect.getClass().getSimpleName());
+    }
+  }
+
 
   @Test
   public void testEmptySortedSet() {
@@ -70,8 +95,25 @@ public class RSCollectorsTest {
       final Map<Object, Object> collect = Stream.empty()
           .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity(),
               RSCollectors.throwingMerger(), LinkedHashMap::new));
-      assertTrue("We should be getting the singleton emptyMap even with a custom Set",
+      assertTrue("We should be getting the singleton emptyMap even with a custom Map",
           collect == Collections.emptyMap());
+    }
+  }
+
+  @Test
+  public void testSingletonMap() {
+    {
+      final Map<Object, Object> collect = Stream.of(1)
+          .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity()));
+      assertEquals("We should be getting a SingletonMap", "SingletonMap",
+          collect.getClass().getSimpleName());
+    }
+    {
+      final Map<Object, Object> collect = Stream.of(1)
+          .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity(),
+              RSCollectors.throwingMerger(), LinkedHashMap::new));
+      assertEquals("We should be getting a SingletonMap even with a custom Map", "SingletonMap",
+          collect.getClass().getSimpleName());
     }
   }
 
