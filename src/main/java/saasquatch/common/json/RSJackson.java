@@ -108,8 +108,6 @@ public class RSJackson {
   public static ObjectNode shallowMerge(@Nonnull JsonNode... jsons) {
     final ObjectNode result = JsonNodeFactory.instance.objectNode();
     for (final JsonNode json : jsons) {
-      if (json == null)
-        continue;
       json.fields().forEachRemaining(entry -> {
         result.set(entry.getKey(), entry.getValue());
       });
