@@ -2,6 +2,7 @@ package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -91,6 +92,22 @@ public class RSUrlCodecTest {
       final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
       assertEquals(javaEncoded, ourEncoded);
     }
+  }
+
+  @Test
+  public void testInvalid() {
+    try {
+      RSUrlCodec.decode("%1%11");
+      fail();
+    } catch (IllegalArgumentException expected) {}
+    try {
+      RSUrlCodec.decode("%1.%11");
+      fail();
+    } catch (IllegalArgumentException expected) {}
+    try {
+      RSUrlCodec.decode("%11%1");
+      fail();
+    } catch (IllegalArgumentException expected) {}
   }
 
   private byte[] randomBytes(int count) {

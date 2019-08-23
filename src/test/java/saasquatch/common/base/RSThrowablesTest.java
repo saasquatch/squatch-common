@@ -1,13 +1,16 @@
 package saasquatch.common.base;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import org.junit.Test;
+import com.google.common.collect.ImmutableList;
 
 public class RSThrowablesTest {
 
@@ -21,6 +24,16 @@ public class RSThrowablesTest {
     final Exception e5 = new Exception("5", e4);
     final List<Throwable> basicCauseChain = RSThrowables.getCauseChainList(e5);
     assertEquals(Arrays.asList(e5, e4, e3, e2, e1, e0), basicCauseChain);
+    final Iterable<Throwable> causeChainIterable = RSThrowables.getCauseChain(e5);
+    assertEquals(basicCauseChain, ImmutableList.copyOf(causeChainIterable));
+  }
+
+  @Test
+  public void testNegativeLimit() {
+    try {
+      RSThrowables.getCauseChainList(new Exception(), -1);
+      fail("negative limit should error");
+    } catch (IllegalArgumentException expected) {}
   }
 
   @Test
@@ -54,6 +67,32 @@ public class RSThrowablesTest {
       } catch (IOException expected) {
         assertEquals(msg, expected.getMessage());
       }
+    }
+  }
+
+  @Test
+  public void testWrapAndThrow() throws Exception {
+    final RuntimeException runtimeException = new UncheckedIOException(new IOException("foo"));
+    try {
+      RSThrowables.wrapAndThrow(runtimeException);
+      fail();
+    } catch (Throwable t) {
+      assertTrue("We should get back the exact same RuntimeException", t == runtimeException);
+    }
+    final Error error = new AssertionError("foo", new ParseException("foo", 0));
+    try {
+      RSThrowables.wrapAndThrow(error);
+      fail();
+    } catch (Throwable t) {
+      assertTrue("We should get back the exact same Error", t == error);
+    }
+    final IOException ioException = new IOException("foo", new Error());
+    try {
+      RSThrowables.wrapAndThrow(ioException);
+      fail();
+    } catch (Throwable t) {
+      assertTrue("We should get back an UncheckedIOException", t instanceof UncheckedIOException);
+      assertTrue("The cause should be the exact same IOException", t.getCause() == ioException);
     }
   }
 
