@@ -1,4 +1,4 @@
-package saasquatch.common.base;
+package saasquatch.common.collect;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,8 +51,7 @@ public final class RSCollectors {
    * @see Collectors#toSet()
    */
   public static <T> Collector<T, ?, Set<T>> toUnmodifiableSet() {
-    return Collectors.collectingAndThen(Collectors.toSet(),
-        RSCollectors::unmodifiableSetFinisher);
+    return Collectors.collectingAndThen(Collectors.toSet(), RSCollectors::unmodifiableSetFinisher);
   }
 
   /**
@@ -146,10 +145,8 @@ public final class RSCollectors {
    */
   public static <T, K extends Enum<K>, U> Collector<T, ?, Map<K, U>> toUnmodifiableEnumMap(
       @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper,
-      @Nonnull final Class<K> clazz) {
-    return toUnmodifiableMap(keyMapper, valueMapper, throwingMerger(),
-        () -> new EnumMap<>(clazz));
+      @Nonnull final Function<? super T, ? extends U> valueMapper, @Nonnull final Class<K> clazz) {
+    return toUnmodifiableMap(keyMapper, valueMapper, throwingMerger(), () -> new EnumMap<>(clazz));
   }
 
   /**

@@ -9,6 +9,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
+import saasquatch.common.collect.RSCollectors;
 
 /**
  * Utilities for {@link Throwable}s.

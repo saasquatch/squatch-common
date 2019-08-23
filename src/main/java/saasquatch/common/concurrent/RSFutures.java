@@ -7,7 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
-import saasquatch.common.base.RSCollectors;
+import saasquatch.common.collect.RSCollectors;
 
 /**
  * Utilities for futures
