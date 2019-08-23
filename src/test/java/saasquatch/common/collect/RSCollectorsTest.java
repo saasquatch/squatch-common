@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -140,11 +143,11 @@ public class RSCollectorsTest {
     final List<String> original = Stream.generate(() -> RandomStringUtils.randomAlphanumeric(128))
         .limit(128)
         .collect(Collectors.toList());
-    final List<String> collected = original.stream()
+    final List<String> collect = original.stream()
         .collect(RSCollectors.toUnmodifiableList());
-    assertEquals(original, collected);
+    assertEquals(original, collect);
     try {
-      collected.clear();
+      collect.clear();
       fail("The result should be unmodifiable");
     } catch (UnsupportedOperationException expected) {}
   }
@@ -154,17 +157,33 @@ public class RSCollectorsTest {
     final Set<String> original = Stream.generate(() -> RandomStringUtils.randomAlphanumeric(128))
         .limit(128)
         .collect(Collectors.toSet());
-    final Set<String> collected1 = original.stream()
+    final Set<String> collect1 = original.stream()
         .collect(RSCollectors.toUnmodifiableSet());
-    final Set<String> collected2 = original.stream()
+    final Set<String> collect2 = original.stream()
         .collect(RSCollectors.toUnmodifiableSet(TreeSet::new));
-    for (Set<String> collected : Arrays.asList(collected1, collected2)) {
-      assertEquals(original, collected);
+    for (Set<String> collect : Arrays.asList(collect1, collect2)) {
+      assertEquals(original, collect);
       try {
-        collected.clear();
+        collect.clear();
         fail("The result should be unmodifiable");
       } catch (UnsupportedOperationException expected) {}
     }
+  }
+
+  @Test
+  public void testEnumSetBasic() {
+    final Set<TimeUnit> original = EnumSet.complementOf(EnumSet.of(TimeUnit.DAYS));
+    final Set<TimeUnit> collect = original.stream()
+        .collect(RSCollectors.toUnmodifiableEnumSet(TimeUnit.class));
+    assertEquals(original, collect);
+  }
+
+  @Test
+  public void testEmptyEnumSet() {
+    final Set<TimeUnit> collect = Stream.<TimeUnit>empty()
+        .collect(RSCollectors.toUnmodifiableEnumSet(TimeUnit.class));
+    assertTrue("We should be getting the singleton emptySet",
+        collect == Collections.<TimeUnit>emptySet());
   }
 
   @Test
@@ -172,18 +191,38 @@ public class RSCollectorsTest {
     final Map<String, String> original =
         Stream.generate(() -> RandomStringUtils.randomAlphanumeric(128)).limit(128)
             .collect(Collectors.toMap(Function.identity(), Function.identity()));
-    final Map<String, String> collected1 = original.entrySet().stream()
+    final Map<String, String> collect1 = original.entrySet().stream()
         .collect(RSCollectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-    final Map<String, String> collected2 = original.entrySet().stream()
+    final Map<String, String> collect2 = original.entrySet().stream()
         .collect(RSCollectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue,
             RSCollectors.throwingMerger(), TreeMap::new));
-    for (Map<String, String> collected : Arrays.asList(collected1, collected2)) {
-      assertEquals(original, collected);
+    for (Map<String, String> collect : Arrays.asList(collect1, collect2)) {
+      assertEquals(original, collect);
       try {
-        collected.clear();
+        collect.clear();
         fail("The result should be unmodifiable");
       } catch (UnsupportedOperationException expected) {}
     }
+  }
+
+  @Test
+  public void testEnumMapBasic() {
+    final Map<TimeUnit, Object> original = new EnumMap<>(TimeUnit.class);
+    original.put(TimeUnit.DAYS, 1);
+    original.put(TimeUnit.SECONDS, 1);
+    final Map<TimeUnit, Object> collect = original.entrySet().stream()
+        .collect(RSCollectors.toUnmodifiableEnumMap(Map.Entry::getKey, Map.Entry::getValue,
+            TimeUnit.class));
+    assertEquals(original, collect);
+  }
+
+  @Test
+  public void testEmptyEnumMap() {
+    final Map<TimeUnit, Object> collect = Stream.<TimeUnit>empty()
+        .collect(RSCollectors.toUnmodifiableEnumMap(Function.identity(), Function.identity(),
+            TimeUnit.class));
+    assertTrue("We should be getting the singleton emptyMap",
+        collect == Collections.<TimeUnit, Object>emptyMap());
   }
 
   @Test
