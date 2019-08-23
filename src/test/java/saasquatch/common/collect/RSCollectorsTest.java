@@ -11,13 +11,19 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
@@ -72,6 +78,24 @@ public class RSCollectorsTest {
 
 
   @Test
+  public void testSortedSet() {
+    final SortedSet<Integer> original = ThreadLocalRandom.current().ints(128).boxed()
+        .collect(Collectors.toCollection(TreeSet::new));
+    final SortedSet<Integer> collect = original.stream()
+        .collect(RSCollectors.toUnmodifiableSortedSet(TreeSet::new));
+    assertEquals(original, collect);
+  }
+
+  @Test
+  public void testNavigableSet() {
+    final NavigableSet<Integer> original = ThreadLocalRandom.current().ints(128).boxed()
+        .collect(Collectors.toCollection(TreeSet::new));
+    final NavigableSet<Integer> collect = original.stream()
+        .collect(RSCollectors.toUnmodifiableNavigableSet(TreeSet::new));
+    assertEquals(original, collect);
+  }
+
+  @Test
   public void testEmptySortedSet() {
     final Set<Object> collect = Stream.empty()
         .collect(RSCollectors.toUnmodifiableSortedSet(TreeSet::new));
@@ -118,6 +142,30 @@ public class RSCollectorsTest {
       assertEquals("We should be getting a SingletonMap even with a custom Map", "SingletonMap",
           collect.getClass().getSimpleName());
     }
+  }
+
+  @Test
+  public void testSortedMap() {
+    final SortedMap<Integer,Integer> original = IntStream.range(1, 128).boxed()
+        .collect(
+            Collectors.toMap(Function.identity(), ignored -> ThreadLocalRandom.current().nextInt(),
+                RSCollectors.throwingMerger(), TreeMap::new));
+    final SortedMap<Integer, Integer> collect = original.entrySet().stream()
+        .collect(RSCollectors.toUnmodifiableSortedMap(Map.Entry::getKey, Map.Entry::getValue,
+            RSCollectors.throwingMerger(), TreeMap::new));
+    assertEquals(original, collect);
+  }
+
+  @Test
+  public void testNavigableMap() {
+    final NavigableMap<Integer,Integer> original = IntStream.range(1, 128).boxed()
+        .collect(
+            Collectors.toMap(Function.identity(), ignored -> ThreadLocalRandom.current().nextInt(),
+                RSCollectors.throwingMerger(), TreeMap::new));
+    final NavigableMap<Integer, Integer> collect = original.entrySet().stream()
+        .collect(RSCollectors.toUnmodifiableNavigableMap(Map.Entry::getKey, Map.Entry::getValue,
+            RSCollectors.throwingMerger(), TreeMap::new));
+    assertEquals(original, collect);
   }
 
   @Test
