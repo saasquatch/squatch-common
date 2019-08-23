@@ -76,7 +76,8 @@ public final class RSHttpHeaders {
         .map(String::trim)
         .filter(s -> s.length() > 0)
         .map(String::toLowerCase)
-        .filter(s -> "identity".equals(s))
+        .filter(s -> !"identity".equals(s))
+        .filter(s -> !"*".equals(s))
         .collect(Collectors.toSet());
   }
 
