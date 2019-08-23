@@ -32,7 +32,7 @@ public final class RSUrlCodec {
    * standard came out in 2005, way after URLEncoder was written.
    */
   public static String encodeStandard(@Nonnull String s) {
-    return encode(s, RSUrlCodec::isStandardUnreseved, false);
+    return encode(s, RSUrlCodec::isRFC3986Unreseved, false);
   }
 
   /**
@@ -124,7 +124,7 @@ public final class RSUrlCodec {
     return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '*';
   }
 
-  private static boolean isStandardUnreseved(int c) {
+  private static boolean isRFC3986Unreseved(int c) {
     return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '~';
   }
 
