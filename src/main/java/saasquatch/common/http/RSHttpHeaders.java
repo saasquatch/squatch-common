@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import saasquatch.common.collect.RSCollectors;
 
 public final class RSHttpHeaders {
 
@@ -78,7 +79,7 @@ public final class RSHttpHeaders {
         .map(String::toLowerCase)
         .filter(s -> !"identity".equals(s))
         .filter(s -> !"*".equals(s))
-        .collect(Collectors.toSet());
+        .collect(RSCollectors.toUnmodifiableSet());
   }
 
   /**
@@ -90,7 +91,7 @@ public final class RSHttpHeaders {
     return acceptEncoding.stream()
         .map(RSHttpHeaders::getAcceptedEncodings)
         .flatMap(Collection::stream)
-        .collect(Collectors.toSet());
+        .collect(RSCollectors.toUnmodifiableSet());
   }
 
 }
