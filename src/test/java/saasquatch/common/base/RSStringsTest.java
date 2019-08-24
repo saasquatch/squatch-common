@@ -1,7 +1,9 @@
 package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
@@ -17,6 +19,16 @@ public class RSStringsTest {
       assertTrue("We should never exceed the limit", truncatedUtf8Size <= 512);
       assertTrue("We should be at most 4 bytes off", truncatedUtf8Size > 512 - 4);
     }
+  }
+
+  @Test
+  public void testUtf8TruncationBadInput() {
+    // This should not error
+    assertNull(RSStrings.truncateToUtf8ByteSize(null, 123));
+    try {
+      RSStrings.truncateToUtf8ByteSize(null, -1);
+      fail("negative input should error");
+    } catch (IllegalArgumentException expected) {}
   }
 
 }
