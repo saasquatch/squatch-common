@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
@@ -77,6 +78,7 @@ public class RSThrowablesTest {
     };
     try {
       throwingRunnable.run();
+      fail();
     } catch (RuntimeException e) {
       try {
         RSThrowables.unwrapAndThrow(e, IOException.class);
@@ -85,10 +87,21 @@ public class RSThrowablesTest {
         assertEquals(msg, expected.getMessage());
       }
     }
+    try {
+      throwingRunnable.run();
+      fail();
+    } catch (RuntimeException e) {
+      try {
+        RSThrowables.unwrapAndThrow(e, ExecutionException.class);
+        // The line above shouldn't do anything
+      } catch (ExecutionException executionException) {
+        fail("Unexpected exception: " + executionException);
+      }
+    }
   }
 
   @Test
-  public void testWrapAndThrow() throws Exception {
+  public void testWrapAndThrow() {
     final RuntimeException runtimeException = new UncheckedIOException(new IOException("foo"));
     try {
       RSThrowables.wrapAndThrow(runtimeException);
@@ -110,6 +123,14 @@ public class RSThrowablesTest {
     } catch (Throwable t) {
       assertTrue("We should get back an UncheckedIOException", t instanceof UncheckedIOException);
       assertTrue("The cause should be the exact same IOException", t.getCause() == ioException);
+    }
+    final ParseException parseException = new ParseException("foo", 0);
+    try {
+      RSThrowables.wrapAndThrow(parseException);
+      fail();
+    } catch (Throwable t) {
+      assertTrue(t instanceof RuntimeException);
+      assertTrue(t.getCause() == parseException);
     }
   }
 

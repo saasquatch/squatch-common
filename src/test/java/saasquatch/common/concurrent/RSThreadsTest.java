@@ -13,10 +13,12 @@ public class RSThreadsTest {
     final String val = "foo";
     final ThreadLocal<String> tl = new ThreadLocal<>();
     try {
-      tl.set(val);
-      assertEquals(val, tl.get());
-      RSThreads.clearThreadLocals(Thread.currentThread());
-      assertNull("All ThreadLocals should get cleared", tl.get());
+      for (int i = 0; i < 3; i++) {
+        tl.set(val);
+        assertEquals(val, tl.get());
+        RSThreads.clearThreadLocals(Thread.currentThread());
+        assertNull("All ThreadLocals should get cleared", tl.get());
+      }
     } finally {
       tl.remove();
     }
