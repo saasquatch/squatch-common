@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -80,13 +81,12 @@ public final class RSThrowables {
    *
    * @see #getCauseChain(Throwable)
    */
-  public static <X extends Exception> X findFirstInCauseChain(@Nonnull Throwable t,
-      Class<? extends X> exceptionClass) {
+  public static <X extends Exception> Optional<? extends X> findFirstInCauseChain(
+      @Nonnull Throwable t, Class<? extends X> exceptionClass) {
     return getCauseChainStream(t)
         .filter(exceptionClass::isInstance)
         .map(exceptionClass::cast)
-        .findFirst()
-        .orElse(null);
+        .findFirst();
   }
 
   /**
@@ -107,7 +107,7 @@ public final class RSThrowables {
    */
   public static <X extends Exception> void unwrapAndThrow(@Nonnull Throwable t,
       Class<? extends X> exceptionClass) throws X {
-    final X ex = findFirstInCauseChain(t, exceptionClass);
+    final X ex = findFirstInCauseChain(t, exceptionClass).orElse(null);
     if (ex != null)
       throw ex;
   }
