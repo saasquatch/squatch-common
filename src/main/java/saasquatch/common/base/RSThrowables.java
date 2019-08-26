@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -115,7 +116,8 @@ public final class RSThrowables {
   /**
    * Inspired by lang3 and jOOL.
    */
-  public static <R> R wrapAndThrow(final Throwable t) {
+  public static <R> R wrapAndThrow(@Nonnull final Throwable t) {
+    Objects.requireNonNull(t);
     if (t instanceof RuntimeException) {
       throw (RuntimeException) t;
     }

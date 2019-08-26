@@ -135,6 +135,14 @@ public class RSThrowablesTest {
     }
   }
 
+  @Test
+  public void testWrapAndThrowNull() {
+    try {
+      RSThrowables.wrapAndThrow(null);
+      fail();
+    } catch (NullPointerException expected) {}
+  }
+
   /**
    * A fake Exception type where {@link #getCause()} always returns a new Exception to emulate an
    * infinite loop.
