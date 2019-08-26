@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import org.junit.Test;
@@ -26,6 +27,22 @@ public class RSThrowablesTest {
     assertEquals(Arrays.asList(e5, e4, e3, e2, e1, e0), basicCauseChain);
     final Iterable<Throwable> causeChainIterable = RSThrowables.getCauseChain(e5);
     assertEquals(basicCauseChain, ImmutableList.copyOf(causeChainIterable));
+  }
+
+  @Test
+  public void testSingletonCauseChain() {
+    final Exception e = new IOException();
+    final List<Throwable> causeChain = RSThrowables.getCauseChainList(e);
+    assertEquals(Collections.singletonList(e), causeChain);
+  }
+
+  @Test
+  public void testListImmutablility() {
+    final List<Throwable> causeChain = RSThrowables.getCauseChainList(new AssertionError());
+    try {
+      causeChain.clear();
+      fail("The List should be immutable");
+    } catch (UnsupportedOperationException expected) {}
   }
 
   @Test

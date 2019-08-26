@@ -6,7 +6,9 @@ import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import saasquatch.common.base.RSThrowables;
@@ -22,7 +24,8 @@ public final class RSThreads {
    * The threadLocals field on a {@link Thread} object. We want to nuke this field after execution
    * to prevent memory leaks caused by {@link ThreadLocal}s.
    */
-  public static void clearThreadLocals(Thread t) {
+  public static void clearThreadLocals(@Nonnull Thread t) {
+    Objects.requireNonNull(t);
     try {
       Field tlField = threadLocalsField;
       if (tlField == null) {
