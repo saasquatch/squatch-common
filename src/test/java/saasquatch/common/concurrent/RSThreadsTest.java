@@ -3,6 +3,7 @@ package saasquatch.common.concurrent;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 
 public class RSThreadsTest {
@@ -19,6 +20,14 @@ public class RSThreadsTest {
     } finally {
       tl.remove();
     }
+  }
+
+  @Test
+  public void testClearThreadLocalsNull() {
+    try {
+      RSThreads.clearThreadLocals(null);
+      fail("NPE expected");
+    } catch (NullPointerException expected) {}
   }
 
   @Test
