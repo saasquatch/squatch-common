@@ -2,6 +2,7 @@ package saasquatch.common.base;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
@@ -127,7 +128,7 @@ public final class RSThrowables {
     if (t instanceof InterruptedException) {
       Thread.currentThread().interrupt();
     }
-    throw new RuntimeException(t);
+    throw new UndeclaredThrowableException(t);
   }
 
   private static class CauseChainIterable implements Iterable<Throwable> {

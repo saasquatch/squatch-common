@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -129,7 +130,7 @@ public class RSThrowablesTest {
       RSThrowables.wrapAndThrow(parseException);
       fail();
     } catch (Throwable t) {
-      assertTrue(t instanceof RuntimeException);
+      assertTrue(t instanceof UndeclaredThrowableException);
       assertTrue(t.getCause() == parseException);
     }
   }
