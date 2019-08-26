@@ -64,7 +64,7 @@ public class RSThrowablesTest {
   @Test
   public void testLargeLimit() {
     final FakeCauseRuntimeException fakeException = new FakeCauseRuntimeException();
-    final long count = RSThrowables.getCauseChainStream(fakeException, 100_000).count();
+    final int count = (int) RSThrowables.getCauseChainStream(fakeException, 100_000).count();
     assertEquals(100_000, count);
   }
 
