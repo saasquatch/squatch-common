@@ -42,6 +42,7 @@ public final class RSThreads {
 
   /**
    * Get a <em>full</em> thread dump using {@link ManagementFactory#getThreadMXBean()}.
+   *
    * @see #threadInfoToString(ThreadInfo)
    */
   public static String fullThreadDump() {
