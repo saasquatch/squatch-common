@@ -23,14 +23,16 @@ public final class RSThrowables {
   private RSThrowables() {}
 
   /**
-   * Convenience method for {@link #getCauseChain(Throwable)}
+   * Get the cause chain with limit 100.
    */
   public static List<Throwable> getCauseChainList(@Nonnull Throwable t) {
     return getCauseChainList(t, DEFAULT_CAUSE_CHAIN_LIMIT);
   }
 
   /**
-   * Convenience method for {@link #getCauseChain(Throwable, int)}
+   * Get the cause chain as a {@link List}
+   *
+   * @param limit the limit for the cause chain. 0 for unlimited.
    */
   public static List<Throwable> getCauseChainList(@Nonnull Throwable t, int limit) {
     return getCauseChainStream(t, limit)
@@ -47,9 +49,7 @@ public final class RSThrowables {
   /**
    * Get the cause chain as a {@link Stream}
    *
-   * @param t
    * @param limit the limit for the cause chain. 0 for unlimited.
-   * @return
    */
   public static Stream<Throwable> getCauseChainStream(@Nonnull Throwable t, int limit) {
     return StreamSupport.stream(getCauseChain(t, limit).spliterator(), false);
@@ -65,7 +65,6 @@ public final class RSThrowables {
   /**
    * Get the cause chain with an arbitrary limit.
    *
-   * @param t
    * @param limit The limit for the cause chain. 0 for unlimited.
    */
   public static Iterable<Throwable> getCauseChain(@Nonnull Throwable t, int limit) {

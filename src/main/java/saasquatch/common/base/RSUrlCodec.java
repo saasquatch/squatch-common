@@ -45,7 +45,6 @@ public final class RSUrlCodec {
    *        be encoded
    * @param spaceToPlus whether ' ' should be turned into '+'. Note that isSafeChar takes precedence
    *        over spaceToPlus.
-   * @return
    */
   public static String encode(@Nonnull String s, @Nonnull IntPredicate isSafeChar,
       boolean spaceToPlus) {
@@ -71,7 +70,7 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@code decode(s, true)}
+   * Convenience method for {@link RSUrlCodec#decode(String, boolean) decode(s, true)}
    */
   public static String decode(@Nonnull String s) {
     // We want to decode plus to space by default
@@ -83,7 +82,6 @@ public final class RSUrlCodec {
    *
    * @param s the input String
    * @param plusToSpace whether '+' should be turned into ' '
-   * @return
    */
   public static String decode(@Nonnull String s, boolean plusToSpace) {
     Objects.requireNonNull(s);
