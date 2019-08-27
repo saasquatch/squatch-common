@@ -2,6 +2,7 @@ package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -36,7 +37,7 @@ public class RSUrlCodecTest {
   @Test
   public void testRandom() throws Exception {
     for (int i = 0; i < 100; i++) {
-      final String original = new String(randomBytes(800), UTF_8);
+      final String original = RandomStringUtils.random(1024);
       final String randomSafeChars = RandomStringUtils.randomAlphanumeric(12);
       final IntPredicate pred = c -> randomSafeChars.indexOf(c) >= 0;
       assertEquals(original, RSUrlCodec.decode(RSUrlCodec.encodeStandard(original)));
@@ -85,11 +86,44 @@ public class RSUrlCodecTest {
   @Test
   public void testFormCompatibility() throws Exception {
     for (int i = 0; i < 1024; i++) {
-      final byte[] bytes = randomBytes(1024);
-      final String fakeString = new String(bytes, UTF_8);
+      final String fakeString = RandomStringUtils.random(1024);
       final String ourEncoded = RSUrlCodec.encodeForm(fakeString);
       final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
       assertEquals(javaEncoded, ourEncoded);
+    }
+  }
+
+  @Test
+  public void testCustomEncodingRules() {
+    // Encode nothing
+    for (int i = 0; i < 1024; i++) {
+      final String fakeString = RandomStringUtils.randomAlphanumeric(1024);
+      final String encoded = RSUrlCodec.encode(fakeString, _i -> true, false);
+      assertEquals(fakeString, encoded);
+    }
+
+    // Test some custom rules
+    {
+      final String toEncode =
+          "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">";
+      assertEquals(
+          "%3C%68%74%6D%6C+%78%6D%6C%6E%73%3D%22%68%74%74%70%3A%2F%2F%77%77%77%2E%77%33%2E%6F%72%67%2F%31%39%39%39%2F%78%68%74%6D%6C%22+%78%6D%6C%3A%6C%61%6E%67%3D%22%65%6E%22+%6C%61%6E%67%3D%22%65%6E%22%3E",
+          RSUrlCodec.encode(toEncode, _i -> false, true));
+      assertEquals(
+          "%3C%68%74%6D%6C%20%78%6D%6C%6E%73%3D%22%68%74%74%70%3A%2F%2F%77%77%77%2E%77%33%2E%6F%72%67%2F%31%39%39%39%2F%78%68%74%6D%6C%22%20%78%6D%6C%3A%6C%61%6E%67%3D%22%65%6E%22%20%6C%61%6E%67%3D%22%65%6E%22%3E",
+          RSUrlCodec.encode(toEncode, _i -> false, false));
+      assertEquals(
+          "<%68%74%6D%6C%20%78%6D%6C%6E%73=%22%68%74%74%70:%2F%2F%77%77%77%2E%77%33%2E%6F%72%67%2F%31%39%39%39%2F%78%68%74%6D%6C%22%20%78%6D%6C:%6C%61%6E%67=%22%65%6E%22%20%6C%61%6E%67=%22%65%6E%22>",
+          RSUrlCodec.encode(toEncode, _i -> _i == '=' || _i == ':' || _i == '<' || _i == '>', false));
+    }
+
+    // Test rules that don't make sense
+    for (int i = 0; i < 1024; i++) {
+      final String toEncode = RandomStringUtils.randomAlphanumeric(1024);
+      final IntPredicate randomRule = _i -> ThreadLocalRandom.current().nextBoolean();
+      assertNotEquals(
+          RSUrlCodec.encode(toEncode, randomRule, false),
+          RSUrlCodec.encode(toEncode, randomRule, false));
     }
   }
 
@@ -107,12 +141,6 @@ public class RSUrlCodecTest {
       RSUrlCodec.decode("%11%1");
       fail();
     } catch (IllegalArgumentException expected) {}
-  }
-
-  private byte[] randomBytes(int count) {
-    final byte[] result = new byte[count];
-    ThreadLocalRandom.current().nextBytes(result);
-    return result;
   }
 
 }
