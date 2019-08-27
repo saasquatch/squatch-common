@@ -10,7 +10,7 @@ This library aims to provide common utilites that are missing from other common 
 
 ## Adding squatch-common to your project
 
-squatch-common is hosted on [JitPack](https://jitpack.io).
+squatch-common is hosted on JitPack.
 
 Add JitPack repository:
 
@@ -29,7 +29,7 @@ Add the dependency:
 <dependency>
   <groupId>com.github.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
 </dependency>
 ```
 
