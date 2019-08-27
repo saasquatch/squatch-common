@@ -120,10 +120,10 @@ public class RSUrlCodecTest {
     // Test rules that don't make sense
     for (int i = 0; i < 1024; i++) {
       final String toEncode = RandomStringUtils.randomAlphanumeric(1024);
-      final IntPredicate randomRule = _i -> ThreadLocalRandom.current().nextBoolean();
+      final IntPredicate randomPred = _i -> ThreadLocalRandom.current().nextBoolean();
       assertNotEquals(
-          RSUrlCodec.encode(toEncode, randomRule, false),
-          RSUrlCodec.encode(toEncode, randomRule, false));
+          RSUrlCodec.encode(toEncode, randomPred, false),
+          RSUrlCodec.encode(toEncode, randomPred, false));
     }
   }
 
