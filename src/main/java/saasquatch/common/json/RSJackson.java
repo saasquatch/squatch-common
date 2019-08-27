@@ -3,6 +3,7 @@ package saasquatch.common.json;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -75,15 +76,15 @@ public final class RSJackson {
     }
   }
 
-  public static boolean isNull(JsonNode j) {
+  public static boolean isNull(@Nullable JsonNode j) {
     return j == null || j.isMissingNode() || j.isNull();
   }
 
-  public static boolean nonNull(JsonNode j) {
+  public static boolean nonNull(@Nullable JsonNode j) {
     return !isNull(j);
   }
 
-  public static boolean isEmpty(JsonNode j) {
+  public static boolean isEmpty(@Nullable JsonNode j) {
     if (isNull(j))
       return true;
     if (j.isValueNode())
@@ -91,7 +92,7 @@ public final class RSJackson {
     return j.size() == 0;
   }
 
-  public static boolean nonEmpty(JsonNode j) {
+  public static boolean nonEmpty(@Nullable JsonNode j) {
     return !isEmpty(j);
   }
 
