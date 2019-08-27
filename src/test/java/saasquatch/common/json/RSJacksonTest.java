@@ -63,6 +63,8 @@ public class RSJacksonTest {
   @Test
   public void testMutateValueNode() {
     final String baseDir = "testMutateValueNodes/";
+    // Test MissingNode
+    assertTrue(RSJackson.mutateValueNodes(MissingNode.getInstance(), j -> j).isMissingNode());
     // identity function
     assertEquals(loadJson(baseDir + "result1.json"),
         RSJackson.mutateValueNodes(loadJson(baseDir + "test1.json"), j -> j));
