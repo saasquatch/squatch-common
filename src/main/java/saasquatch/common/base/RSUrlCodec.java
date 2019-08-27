@@ -54,15 +54,11 @@ public final class RSUrlCodec {
     while (bytes.hasRemaining()) {
       final int b = bytes.get() & 0xff;
       if (isSafeChar.test(b)) {
-        buf.append((char) b);
+        buf.put((char) b);
       } else if (spaceToPlus && b == ' ') {
-        buf.append('+');
+        buf.put('+');
       } else {
-        buf.append('%');
-        final char hex1 = Character.toUpperCase(Character.forDigit((b >> 4) & 0xF, 16));
-        final char hex2 = Character.toUpperCase(Character.forDigit(b & 0xF, 16));
-        buf.append(hex1);
-        buf.append(hex2);
+        buf.put('%').put(hexDigit(b >> 4)).put(hexDigit(b & 0xF));
       }
     }
     buf.flip();
@@ -105,6 +101,10 @@ public final class RSUrlCodec {
     }
     buf.flip();
     return UTF_8.decode(buf).toString();
+  }
+
+  private static char hexDigit(final int b) {
+    return Character.toUpperCase(Character.forDigit(b & 0xF, 16));
   }
 
   private static int digit16(byte b) {
