@@ -4,7 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.Objects;
+import java.nio.charset.Charset;
 import java.util.function.IntPredicate;
 import javax.annotation.Nonnull;
 
@@ -38,18 +38,26 @@ public final class RSUrlCodec {
   }
 
   /**
+   * Convenience method for {@link #encode(String, Charset, IntPredicate, boolean)} with UTF-8
+   */
+  public static String encode(@Nonnull String s, @Nonnull IntPredicate isSafeChar,
+      boolean spaceToPlus) {
+    return encode(s, UTF_8, isSafeChar, spaceToPlus);
+  }
+
+  /**
    * URL encode all chars except for the safe chars.
    *
    * @param s the input String
+   * @param charset the {@link Charset} to use
    * @param isSafeChar a predicate that returns true if the input is considered safe and shouldn't
    *        be encoded
    * @param spaceToPlus whether ' ' should be turned into '+'. Note that isSafeChar takes precedence
    *        over spaceToPlus.
    */
-  public static String encode(@Nonnull String s, @Nonnull IntPredicate isSafeChar,
-      boolean spaceToPlus) {
-    Objects.requireNonNull(s);
-    final ByteBuffer bytes = UTF_8.encode(s);
+  public static String encode(@Nonnull String s, @Nonnull Charset charset,
+      @Nonnull IntPredicate isSafeChar, boolean spaceToPlus) {
+    final ByteBuffer bytes = charset.encode(s);
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
     while (bytes.hasRemaining()) {
       final int b = bytes.get() & 0xff;
@@ -66,7 +74,7 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decode(String, boolean) decode(s, true)}
+   * Convenience method for {@link RSUrlCodec#decode(String, boolean)}
    */
   public static String decode(@Nonnull String s) {
     // We want to decode plus to space by default
@@ -74,44 +82,52 @@ public final class RSUrlCodec {
   }
 
   /**
+   * Convenience method for {@link RSUrlCodec#decode(String, Charset, boolean)}
+   */
+  public static String decode(@Nonnull String s, boolean plusToSpace) {
+    return decode(s, UTF_8, plusToSpace);
+  }
+
+  /**
    * URL decode
    *
    * @param s the input String
+   * @param charset the {@link Charset} to use
    * @param plusToSpace whether '+' should be turned into ' '
+   * @throws IllegalArgumentException if the input is invalid
    */
-  public static String decode(@Nonnull String s, boolean plusToSpace) {
-    Objects.requireNonNull(s);
-    final ByteBuffer bytes = UTF_8.encode(s);
-    final ByteBuffer buf = ByteBuffer.allocate(bytes.remaining());
-    while (bytes.hasRemaining()) {
-      final byte b = bytes.get();
-      if (b == '+' && plusToSpace) {
-        buf.put((byte) ' ');
-      } else if (b == '%') {
+  public static String decode(@Nonnull String s, @Nonnull Charset charset, boolean plusToSpace) {
+    final CharBuffer chars = CharBuffer.wrap(s);
+    final ByteBuffer buf = ByteBuffer.allocate(s.length());
+    while (chars.hasRemaining()) {
+      final char c = chars.get();
+      if (c == '%') {
         try {
-          final int u = digit16(bytes.get());
-          final int l = digit16(bytes.get());
+          final int u = digit16(chars.get());
+          final int l = digit16(chars.get());
           buf.put((byte) ((u << 4) + l));
         } catch (BufferUnderflowException e) {
           throw new IllegalArgumentException("Invalid URL encoding: ", e);
         }
+      } else if (plusToSpace && c == '+') {
+        buf.put((byte) ' ');
       } else {
-        buf.put(b);
+        buf.put((byte) c);
       }
     }
     buf.flip();
-    return UTF_8.decode(buf).toString();
+    return charset.decode(buf).toString();
   }
 
   private static char hexDigit(final int b) {
     return Character.toUpperCase(Character.forDigit(b & 0xF, 16));
   }
 
-  private static int digit16(byte b) {
-    final int i = Character.digit((char) b, 16);
+  private static int digit16(char c) {
+    final int i = Character.digit(c, 16);
     if (i == -1) {
       throw new IllegalArgumentException(
-          "Invalid URL encoding: not a valid digit (radix 16): " + b);
+          "Invalid URL encoding: not a valid digit (radix 16): " + c);
     }
     return i;
   }
