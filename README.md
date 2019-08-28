@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/saasquatch/squatch-common.svg?branch=master)](https://travis-ci.org/saasquatch/squatch-common)
+[![](https://jitci.com/gh/saasquatch/squatch-common/svg)](https://jitci.com/gh/saasquatch/squatch-common)
 [![](https://jitpack.io/v/saasquatch/squatch-common.svg)](https://jitpack.io/#saasquatch/squatch-common)
 
 SaaSquatch utility libraries for Java
