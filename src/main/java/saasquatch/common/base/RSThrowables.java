@@ -74,7 +74,7 @@ public final class RSThrowables {
     if (limit < 0) {
       throw new IllegalArgumentException("Negative limit");
     }
-    return new CauseChainIterable(t, limit);
+    return new CauseChainIterable(Objects.requireNonNull(t), limit);
   }
 
   /**
@@ -82,7 +82,7 @@ public final class RSThrowables {
    *
    * @see #getCauseChain(Throwable)
    */
-  public static <X extends Exception> Optional<? extends X> findFirstInCauseChain(
+  public static <X extends Throwable> Optional<? extends X> findFirstInCauseChain(
       @Nonnull Throwable t, Class<? extends X> exceptionClass) {
     return getCauseChainStream(t)
         .filter(exceptionClass::isInstance)
@@ -106,7 +106,7 @@ public final class RSThrowables {
    * }
    * </pre>
    */
-  public static <X extends Exception> void unwrapAndThrow(@Nonnull Throwable t,
+  public static <X extends Throwable> void unwrapAndThrow(@Nonnull Throwable t,
       Class<? extends X> exceptionClass) throws X {
     final X ex = findFirstInCauseChain(t, exceptionClass).orElse(null);
     if (ex != null)

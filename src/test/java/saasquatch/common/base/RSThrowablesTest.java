@@ -1,6 +1,7 @@
 package saasquatch.common.base;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
@@ -29,6 +31,9 @@ public class RSThrowablesTest {
     assertEquals(Arrays.asList(e5, e4, e3, e2, e1, e0), basicCauseChain);
     final Iterable<Throwable> causeChainIterable = RSThrowables.getCauseChain(e5);
     assertEquals(basicCauseChain, ImmutableList.copyOf(causeChainIterable));
+    final List<Throwable> causeChainListFromStream = RSThrowables.getCauseChainStream(e5)
+        .collect(Collectors.toList());
+    assertEquals(basicCauseChain, causeChainListFromStream);
   }
 
   @Test
@@ -65,9 +70,25 @@ public class RSThrowablesTest {
 
   @Test
   public void testLargeLimit() {
+    final int largeLimit = 100_000;
     final FakeCauseRuntimeException fakeException = new FakeCauseRuntimeException();
-    final int count = (int) RSThrowables.getCauseChainStream(fakeException, 100_000).count();
-    assertEquals(100_000, count);
+    final int count = (int) RSThrowables.getCauseChainStream(fakeException, largeLimit).count();
+    assertEquals(largeLimit, count);
+  }
+
+  @Test
+  public void testCauseChainWithNull() {
+    try {
+      RSThrowables.getCauseChain(null);
+      fail();
+    } catch (NullPointerException expected) {}
+  }
+
+  @Test
+  public void testBasicFindFirstInCauseChain() {
+    final Exception e = new Exception(new IOException("0", new Exception(new IOException("1"))));
+    assertEquals("0", RSThrowables.findFirstInCauseChain(e, IOException.class).get().getMessage());
+    assertFalse(RSThrowables.findFirstInCauseChain(e, CompletionException.class).isPresent());
   }
 
   @Test
