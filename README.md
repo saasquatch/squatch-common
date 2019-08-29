@@ -30,7 +30,7 @@ Add the dependency:
 <dependency>
   <groupId>com.github.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
 </dependency>
 ```
 
