@@ -66,7 +66,9 @@ public final class RSUrlCodec {
       } else if (spaceToPlus && b == ' ') {
         buf.put('+');
       } else {
-        buf.put('%').put(hexDigit(b >> 4)).put(hexDigit(b & 0xF));
+        buf.put('%');
+        buf.put(Character.toUpperCase(Character.forDigit((b >> 4) & 0xF, 16)));
+        buf.put(Character.toUpperCase(Character.forDigit(b & 0xF, 16)));
       }
     }
     buf.flip();
@@ -103,8 +105,8 @@ public final class RSUrlCodec {
       final char c = chars.get();
       if (c == '%') {
         try {
-          final int u = digit16(chars.get());
-          final int l = digit16(chars.get());
+          final int u = digit16Strict(chars.get());
+          final int l = digit16Strict(chars.get());
           buf.put((byte) ((u << 4) + l));
         } catch (BufferUnderflowException e) {
           throw new IllegalArgumentException("Invalid URL encoding: ", e);
@@ -119,17 +121,61 @@ public final class RSUrlCodec {
     return charset.decode(buf).toString();
   }
 
-  private static char hexDigit(final int b) {
-    return Character.toUpperCase(Character.forDigit(b & 0xF, 16));
-  }
-
-  private static int digit16(char c) {
+  private static int digit16Strict(char c) {
     final int i = Character.digit(c, 16);
     if (i == -1) {
       throw new IllegalArgumentException(
           "Invalid URL encoding: not a valid digit (radix 16): " + c);
     }
     return i;
+  }
+
+  /**
+   * Convenience method for {@link RSUrlCodec#decodeLenient(String, boolean)}
+   */
+  public static String decodeLenient(@Nonnull String s) {
+    // We want to decode plus to space by default
+    return decodeLenient(s, true);
+  }
+
+  /**
+   * Convenience method for {@link RSUrlCodec#decodeLenient(String, Charset, boolean)}
+   */
+  public static String decodeLenient(@Nonnull String s, boolean plusToSpace) {
+    return decodeLenient(s, UTF_8, plusToSpace);
+  }
+
+  /**
+   * Same as {@link #decode(String, Charset, boolean)} but instead of failing, it will ignore
+   * invalid digits and invalid sequences
+   */
+  public static String decodeLenient(@Nonnull String s, @Nonnull Charset charset,
+      boolean plusToSpace) {
+    final char[] chars = s.toCharArray(); // Use char array since we'll need to rewind
+    final ByteBuffer buf = ByteBuffer.allocate(s.length());
+    for (int i = 0; i < chars.length;) {
+      final char c = chars[i++];
+      if (c == '%' && chars.length - i >= 2) {
+        final char uc = chars[i++];
+        final char lc = chars[i++];
+        final int u = Character.digit(uc, 16);
+        final int l = Character.digit(lc, 16);
+        if (u != -1 && l != -1) {
+          buf.put((byte) ((u << 4) + l));
+        } else {
+          // The sequence has an invalid digit, so we need to output the '%' and rewind.
+          buf.put((byte) '%');
+          i -= 2;
+          continue;
+        }
+      } else if (plusToSpace && c == '+') {
+        buf.put((byte) ' ');
+      } else {
+        buf.put((byte) c);
+      }
+    }
+    buf.flip();
+    return charset.decode(buf).toString();
   }
 
   private static boolean isAsciiAlphaNum(int c) {
