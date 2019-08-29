@@ -4,15 +4,30 @@ import static org.junit.Assert.assertEquals;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class RSFuturesTest {
+
+  private ScheduledExecutorService scheduledExecutor;
+
+  @Before
+  public void before() {
+    this.scheduledExecutor = Executors.newScheduledThreadPool(1);
+  }
+
+  @After
+  public void after() {
+    this.scheduledExecutor.shutdown();
+  }
 
   @Test
   public void testSequence() throws Exception {
@@ -26,13 +41,17 @@ public class RSFuturesTest {
 
   @Test
   public void testSequenceAsyncExecutor() throws Exception {
-    doTestSequence(promises -> RSFutures.sequenceAsync(promises, ForkJoinPool.commonPool()));
+    final ExecutorService executor = Executors.newFixedThreadPool(8);
+    try {
+      doTestSequence(promises -> RSFutures.sequenceAsync(promises, executor));
+    } finally {
+      executor.shutdown();
+    }
   }
 
-  private static void doTestSequence(
+  private void doTestSequence(
       Function<List<CompletionStage<Integer>>, CompletionStage<List<Integer>>> sequenceFunc)
       throws Exception {
-    final ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1);
     try {
       final List<Integer> intList = ThreadLocalRandom.current().ints(1024, 0, 256)
           .boxed()
