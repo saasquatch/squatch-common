@@ -134,6 +134,19 @@ public class RSUrlCodecTest {
   }
 
   @Test
+  public void testEncodingSpace() {
+    assertEquals(" ", RSUrlCodec.encode(" ", anything -> true, true));
+    assertEquals("+", RSUrlCodec.encode(" ", anything -> false, true));
+    assertEquals("%20", RSUrlCodec.encode(" ", anything -> false, false));
+  }
+
+  @Test
+  public void testDecodingSpace() {
+    assertEquals(" ", RSUrlCodec.decode("+", true));
+    assertEquals("+", RSUrlCodec.decode("+", false));
+  }
+
+  @Test
   public void testInvalid() {
     try {
       RSUrlCodec.decode("%4%44");
