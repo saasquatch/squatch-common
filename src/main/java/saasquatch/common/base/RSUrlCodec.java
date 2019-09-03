@@ -25,7 +25,7 @@ public final class RSUrlCodec {
    * URLEncoder does by default.
    */
   public static String encodeForm(@Nonnull String s) {
-    return encode(s, UTF_8, RSUrlCodec::isWwwFormUrlSafe, true);
+    return encode(s, RSUrlCodec::isWwwFormUrlSafe, true);
   }
 
   /**
@@ -34,7 +34,7 @@ public final class RSUrlCodec {
    * standard came out in 2005, way after URLEncoder was written.
    */
   public static String encodeStandard(@Nonnull String s) {
-    return encode(s, UTF_8, RSUrlCodec::isRFC3986Unreseved, false);
+    return encode(s, RSUrlCodec::isRFC3986Unreseved, false);
   }
 
   /**
@@ -87,7 +87,7 @@ public final class RSUrlCodec {
    */
   public static String decode(@Nonnull String s) {
     // We want to decode plus to space by default
-    return decode(s, UTF_8, true);
+    return decode(s, true);
   }
 
   /**
@@ -142,7 +142,7 @@ public final class RSUrlCodec {
    */
   public static String decodeLenient(@Nonnull String s) {
     // We want to decode plus to space by default
-    return decodeLenient(s, UTF_8, true);
+    return decodeLenient(s, true);
   }
 
   /**
