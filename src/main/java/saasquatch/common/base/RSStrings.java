@@ -37,10 +37,10 @@ public final class RSStrings {
       } else {
         more = 3;
       }
-      if (b + more > maxBytes) {
+      b += more;
+      if (b > maxBytes) {
         return s.substring(0, i);
       }
-      b += more;
       i += skip;
     }
     return s;
