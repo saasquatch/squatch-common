@@ -149,6 +149,11 @@ public class RSUrlCodecTest {
   @Test
   public void testInvalid() {
     try {
+      RSUrlCodec.decode("%%44");
+      fail();
+    } catch (IllegalArgumentException expected) {}
+    assertEquals("%D", RSUrlCodec.decodeLenient("%%44"));
+    try {
       RSUrlCodec.decode("%4%44");
       fail();
     } catch (IllegalArgumentException expected) {}
@@ -163,6 +168,11 @@ public class RSUrlCodecTest {
       fail();
     } catch (IllegalArgumentException expected) {}
     assertEquals("D%4", RSUrlCodec.decodeLenient("%44%4"));
+    try {
+      RSUrlCodec.decode("%44%");
+      fail();
+    } catch (IllegalArgumentException expected) {}
+    assertEquals("D%", RSUrlCodec.decodeLenient("%44%"));
   }
 
 }

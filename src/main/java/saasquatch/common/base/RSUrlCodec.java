@@ -161,9 +161,13 @@ public final class RSUrlCodec {
         final int u = Character.digit(uc, 16);
         final int l = Character.digit(lc, 16);
         if (u != -1 && l != -1) {
+          // Both digits are valid.
           buf.put((byte) ((u << 4) + l));
         } else {
-          // The sequence has an invalid digit, so we need to output the '%' and rewind.
+          /*
+           * The sequence has an invalid digit, so we need to output the '%' and rewind, since the 2
+           * characters can potentially start a new encoding sequence.
+           */
           buf.put((byte) '%');
           i -= 2;
           continue;
