@@ -60,19 +60,26 @@ public final class RSUrlCodec {
     final ByteBuffer bytes = charset.encode(s);
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
     while (bytes.hasRemaining()) {
-      final int b = bytes.get() & 0xff;
+      final int b = bytes.get() & 0xFF;
       if (isSafeChar.test(b)) {
         buf.put((char) b);
       } else if (spaceToPlus && b == ' ') {
         buf.put('+');
       } else {
         buf.put('%');
-        buf.put(Character.toUpperCase(Character.forDigit((b >> 4) & 0xF, 16)));
-        buf.put(Character.toUpperCase(Character.forDigit(b & 0xF, 16)));
+        buf.put(hexDigitUpper((b >> 4) & 0xF));
+        buf.put(hexDigitUpper(b & 0xF));
       }
     }
     buf.flip();
     return buf.toString();
+  }
+
+  public static char hexDigitUpper(int digit) {
+    if (digit < 10) {
+      return (char) ('0' + digit);
+    }
+    return (char) ('A' - 10 + digit);
   }
 
   /**
