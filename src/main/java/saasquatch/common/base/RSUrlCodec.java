@@ -363,7 +363,7 @@ public final class RSUrlCodec {
     final int i = digit16(c);
     if (i == -1) {
       throw new IllegalArgumentException(
-          "Invalid URL encoding: not a valid digit (radix 16): " + c);
+          "Invalid URL encoding: Illegal hex characters in escape (%) pattern: " + c);
     }
     return i;
   }
