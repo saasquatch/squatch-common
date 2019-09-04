@@ -64,6 +64,8 @@ public final class RSUrlCodec {
    * URL encode all characters except for the unreserved ones.<br>
    * This is the standard RFC 3986 behavior. Java's default URLEncoder does not do this because the
    * standard came out in 2005, way after URLEncoder was written.
+   *
+   * @see #getEncoder()
    */
   public static String encode(@Nonnull CharSequence s) {
     return Encoder.RFC3986.encode(s);
@@ -94,6 +96,7 @@ public final class RSUrlCodec {
    * URL decode in strict mode
    *
    * @throws IllegalArgumentException if the input contains invalid URL encodings
+   * @see #getDecoder()
    * @see Decoder#strict()
    */
   public static String decode(@Nonnull CharSequence s) {
@@ -125,7 +128,9 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL Encoder
+   * URL Encoder<br>
+   * This class is immutable and thread-safe if {@link #safeCharPredicate} is thread-safe. The
+   * built-in {@link Encoder}s returned by {@link RSUrlCodec} are thread-safe.
    *
    * @author sli
    * @see RSUrlCodec#getEncoder()
@@ -156,8 +161,9 @@ public final class RSUrlCodec {
      */
     public Encoder withCharset(@Nonnull Charset charset) {
       Objects.requireNonNull(charset);
-      if (this.charset.equals(charset))
+      if (this.charset.equals(charset)) {
         return this;
+      }
       return new Encoder(charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
@@ -179,8 +185,9 @@ public final class RSUrlCodec {
      * @see #withSafeCharPredicate(IntPredicate)
      */
     public Encoder encodeSpaceToPlus(boolean spaceToPlus) {
-      if (this.spaceToPlus == spaceToPlus)
+      if (this.spaceToPlus == spaceToPlus) {
         return this;
+      }
       return new Encoder(this.charset, this.safeCharPredicate, spaceToPlus, this.upperCase);
     }
 
@@ -199,8 +206,9 @@ public final class RSUrlCodec {
     }
 
     private Encoder withUpperCase(boolean upperCase) {
-      if (this.upperCase == upperCase)
+      if (this.upperCase == upperCase) {
         return this;
+      }
       return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, upperCase);
     }
 
@@ -229,7 +237,8 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL decoder
+   * URL decoder<br>
+   * This class is immutable and thread-safe.
    *
    * @author sli
    * @see RSUrlCodec#getDecoder()
@@ -255,8 +264,9 @@ public final class RSUrlCodec {
      */
     public Decoder withCharset(@Nonnull Charset charset) {
       Objects.requireNonNull(charset);
-      if (this.charset.equals(charset))
+      if (this.charset.equals(charset)) {
         return this;
+      }
       return new Decoder(charset, this.plusToSpace, this.strict);
     }
 
@@ -266,8 +276,9 @@ public final class RSUrlCodec {
      * @return a new {@link Decoder} with the specified config
      */
     public Decoder decodePlusToSpace(boolean plusToSpace) {
-      if (this.plusToSpace == plusToSpace)
+      if (this.plusToSpace == plusToSpace) {
         return this;
+      }
       return new Decoder(this.charset, plusToSpace, this.strict);
     }
 
@@ -287,8 +298,9 @@ public final class RSUrlCodec {
     }
 
     private Decoder withStrict(boolean strict) {
-      if (this.strict == strict)
+      if (this.strict == strict) {
         return this;
+      }
       return new Decoder(this.charset, this.plusToSpace, strict);
     }
 
