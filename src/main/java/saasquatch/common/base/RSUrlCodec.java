@@ -5,8 +5,10 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.function.IntPredicate;
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
 
 /**
  * Util for URL encoding/decoding. Methods in this class are more standards-compliant and more
@@ -173,12 +175,176 @@ public final class RSUrlCodec {
     return charset.decode(buf).toString();
   }
 
+  @Immutable
+  public static final class Encoder {
+
+    private final Charset charset;
+    private final IntPredicate safeCharPredicate;
+    private final boolean spaceToPlus;
+    private final boolean upperCase;
+
+    private Encoder(@Nonnull Charset charset, @Nonnull IntPredicate safeCharPredicate,
+        boolean spaceToPlus, boolean upperCase) {
+      this.charset = charset;
+      this.safeCharPredicate = safeCharPredicate;
+      this.spaceToPlus = spaceToPlus;
+      this.upperCase = upperCase;
+    }
+
+    public Encoder withCharset(@Nonnull Charset charset) {
+      Objects.requireNonNull(charset);
+      if (this.charset.equals(charset))
+        return this;
+      return new Encoder(charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase);
+    }
+
+    public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
+      Objects.requireNonNull(safeCharPredicate);
+      return new Encoder(this.charset, safeCharPredicate, this.spaceToPlus, this.upperCase);
+    }
+
+    public Encoder encodeSpaceToPlus(boolean spaceToPlus) {
+      if (this.spaceToPlus == spaceToPlus)
+        return this;
+      return new Encoder(this.charset, this.safeCharPredicate, spaceToPlus, this.upperCase);
+    }
+
+    public Encoder upperCase() {
+      return withUpperCase(true);
+    }
+
+    public Encoder lowerCase() {
+      return withUpperCase(false);
+    }
+
+    private Encoder withUpperCase(boolean upperCase) {
+      if (this.upperCase == upperCase)
+        return this;
+      return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, upperCase);
+    }
+
+    public String encode(@Nonnull CharSequence s) {
+      final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
+      final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
+      while (bytes.hasRemaining()) {
+        final int b = bytes.get() & 0xFF;
+        if (safeCharPredicate.test(b)) {
+          buf.put((char) b);
+        } else if (spaceToPlus && b == ' ') {
+          buf.put('+');
+        } else {
+          buf.put('%');
+          buf.put(hexDigit(b >> 4, upperCase));
+          buf.put(hexDigit(b, upperCase));
+        }
+      }
+      buf.flip();
+      return buf.toString();
+    }
+
+  }
+
+  @Immutable
+  public static final class Decoder {
+
+    private final Charset charset;
+    private final boolean plusToSpace;
+    private final boolean lenient;
+
+    private Decoder(Charset charset, boolean plusToSpace, boolean lenient) {
+      this.charset = charset;
+      this.plusToSpace = plusToSpace;
+      this.lenient = lenient;
+    }
+
+    public Decoder withCharset(@Nonnull Charset charset) {
+      Objects.requireNonNull(charset);
+      if (this.charset.equals(charset))
+        return this;
+      return new Decoder(charset, this.plusToSpace, this.lenient);
+    }
+
+    public Decoder decodePlusToSpace(boolean plusToSpace) {
+      if (this.plusToSpace == plusToSpace)
+        return this;
+      return new Decoder(this.charset, plusToSpace, this.lenient);
+    }
+
+    public Decoder strict() {
+      return withLenient(false);
+    }
+
+    public Decoder lenient() {
+      return withLenient(true);
+    }
+
+    private Decoder withLenient(boolean lenient) {
+      if (this.lenient == lenient)
+        return this;
+      return new Decoder(this.charset, this.plusToSpace, lenient);
+    }
+
+    public String decode(@Nonnull CharSequence s) {
+      // Not using CharBuffer since we may need to rewind
+      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      for (int i = 0; i < s.length();) {
+        final char c = s.charAt(i++);
+        if (c == '%') {
+          if (lenient) {
+            if (s.length() - i < 2) {
+              buf.put((byte) '%');
+              continue;
+            }
+            final int u = digit16(s.charAt(i++));
+            final int l = digit16(s.charAt(i++));
+            if (u != -1 && l != -1) {
+              // Both digits are valid.
+              buf.put((byte) ((u << 4) + l));
+            } else {
+              /*
+               * The sequence has an invalid digit, so we need to output the '%' and rewind, since
+               * the 2 characters can potentially start a new encoding sequence.
+               */
+              buf.put((byte) '%');
+              i -= 2;
+              continue;
+            }
+          } else {
+            try {
+              final int u = digit16Strict(s.charAt(i++));
+              final int l = digit16Strict(s.charAt(i++));
+              buf.put((byte) ((u << 4) + l));
+            } catch (IndexOutOfBoundsException e) {
+              throw new IllegalArgumentException(
+                  "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
+            }
+          }
+        } else if (plusToSpace && c == '+') {
+          buf.put((byte) ' ');
+        } else {
+          buf.put((byte) c);
+        }
+      }
+      buf.flip();
+      return charset.decode(buf).toString();
+    }
+
+  }
+
   private static char hexDigitUpper(int b) {
     final int digit = b & 0xF;
     if (digit < 10) {
       return (char) ('0' + digit);
     }
     return (char) ('A' - 10 + digit);
+  }
+
+  private static char hexDigit(int b, boolean upperCase) {
+    final int digit = b & 0xF;
+    if (digit < 10) {
+      return (char) ('0' + digit);
+    }
+    return (char) ((upperCase ? 'A' : 'a') - 10 + digit);
   }
 
   private static int digit16(char c) {
