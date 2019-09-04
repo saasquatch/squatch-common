@@ -1,6 +1,7 @@
 package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -20,6 +21,14 @@ import javax.annotation.concurrent.Immutable;
 public final class RSUrlCodec {
 
   private RSUrlCodec() {}
+
+  public static Encoder getEncoder() {
+    return Encoder.RFC3986;
+  }
+
+  public static Decoder getDecoder() {
+    return Decoder.STRICT;
+  }
 
   /**
    * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
@@ -194,39 +203,56 @@ public final class RSUrlCodec {
     }
 
     public String decode(@Nonnull CharSequence s) {
-      // Not using CharBuffer since we may need to rewind
+      if (lenient) {
+        return decodeLenient(s);
+      } else {
+        return decodeStrict(s);
+      }
+    }
+
+    private String decodeStrict(@Nonnull CharSequence s) {
+      final CharBuffer chars = CharBuffer.wrap(s);
+      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      while (chars.hasRemaining()) {
+        final char c = chars.get();
+        if (c == '%') {
+          try {
+            final int u = digit16Strict(chars.get());
+            final int l = digit16Strict(chars.get());
+            buf.put((byte) ((u << 4) + l));
+          } catch (BufferUnderflowException e) {
+            throw new IllegalArgumentException(
+                "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
+          }
+        } else if (plusToSpace && c == '+') {
+          buf.put((byte) ' ');
+        } else {
+          buf.put((byte) c);
+        }
+      }
+      buf.flip();
+      return charset.decode(buf).toString();
+    }
+
+    private String decodeLenient(@Nonnull CharSequence s) {
+      // Not using CharBuffer since we'll need to rewind
       final ByteBuffer buf = ByteBuffer.allocate(s.length());
       for (int i = 0; i < s.length();) {
         final char c = s.charAt(i++);
-        if (c == '%') {
-          if (lenient) {
-            if (s.length() - i < 2) {
-              buf.put((byte) '%');
-              continue;
-            }
-            final int u = digit16(s.charAt(i++));
-            final int l = digit16(s.charAt(i++));
-            if (u != -1 && l != -1) {
-              // Both digits are valid.
-              buf.put((byte) ((u << 4) + l));
-            } else {
-              /*
-               * The sequence has an invalid digit, so we need to output the '%' and rewind, since
-               * the 2 characters can potentially start a new encoding sequence.
-               */
-              buf.put((byte) '%');
-              i -= 2;
-              continue;
-            }
+        if (c == '%' && s.length() - i >= 2) {
+          final int u = digit16(s.charAt(i++));
+          final int l = digit16(s.charAt(i++));
+          if (u != -1 && l != -1) {
+            // Both digits are valid.
+            buf.put((byte) ((u << 4) + l));
           } else {
-            try {
-              final int u = digit16Strict(s.charAt(i++));
-              final int l = digit16Strict(s.charAt(i++));
-              buf.put((byte) ((u << 4) + l));
-            } catch (IndexOutOfBoundsException e) {
-              throw new IllegalArgumentException(
-                  "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
-            }
+            /*
+             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
+             * 2 characters can potentially start a new encoding sequence.
+             */
+            buf.put((byte) '%');
+            i -= 2;
+            continue;
           }
         } else if (plusToSpace && c == '+') {
           buf.put((byte) ' ');
