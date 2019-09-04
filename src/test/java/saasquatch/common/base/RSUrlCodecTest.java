@@ -1,5 +1,7 @@
 package saasquatch.common.base;
 
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -192,6 +194,20 @@ public class RSUrlCodecTest {
       fail();
     } catch (IllegalArgumentException expected) {}
     assertEquals("D%", RSUrlCodec.getLenientDecoder().decode("%44%"));
+  }
+
+  @Test
+  public void testEncoderConfig() {
+    assertEquals("%0A%00", RSUrlCodec.getEncoder().withCharset(UTF_16LE).upperCase().encode("\n"));
+    assertEquals("%00%0a", RSUrlCodec.getEncoder().withCharset(UTF_16BE).lowerCase().encode("\n"));
+  }
+
+  @Test
+  public void testDecoderConfig() {
+    try {
+      RSUrlCodec.getLenientDecoder().strict().decode("%%44");
+      fail();
+    } catch (IllegalArgumentException expected) {}
   }
 
 }
