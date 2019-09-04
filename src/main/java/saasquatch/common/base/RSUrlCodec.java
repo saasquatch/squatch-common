@@ -13,7 +13,7 @@ import javax.annotation.concurrent.Immutable;
 /**
  * Util for URL encoding/decoding. Methods in this class are more standards-compliant and more
  * efficient than Java's built-in URL encoder and decoder. All the URL encoded strings that are to
- * be persisted somewhere should be encoded using {@link #encodeStandard(String)} to keep everything
+ * be persisted somewhere should be encoded using {@link #encode(String)} to keep everything
  * consistent.
  *
  * @author sli
@@ -30,6 +30,15 @@ public final class RSUrlCodec {
   }
 
   /**
+   * @return a singleton {@link Encoder} that uses the {@code application/x-www-form-urlencoded}
+   *         format. This is what Java's built-in {@link java.net.URLEncoder URLEncoder} does by
+   *         default.
+   */
+  public static Encoder getFormEncoder() {
+    return Encoder.FORM;
+  }
+
+  /**
    * @return a singleton {@link Decoder#strict() strict} {@link Decoder}.
    */
   public static Decoder getDecoder() {
@@ -37,11 +46,10 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
-   * URLEncoder does by default.
+   * @return a singleton {@link Decoder#lenient() lenient} {@link Decoder}
    */
-  public static String encodeForm(@Nonnull CharSequence s) {
-    return Encoder.FORM.encode(s);
+  public static Decoder getLenientDecoder() {
+    return Decoder.LENIENT;
   }
 
   /**
@@ -49,7 +57,7 @@ public final class RSUrlCodec {
    */
   @Deprecated
   public static String encodeStandard(@Nonnull CharSequence s) {
-    return encode(s);
+    return Encoder.RFC3986.encode(s);
   }
 
   /**
@@ -59,6 +67,17 @@ public final class RSUrlCodec {
    */
   public static String encode(@Nonnull CharSequence s) {
     return Encoder.RFC3986.encode(s);
+  }
+
+  /**
+   * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
+   * URLEncoder does by default.
+   *
+   * @deprecated use {@link #getFormEncoder()}
+   */
+  @Deprecated
+  public static String encodeForm(@Nonnull CharSequence s) {
+    return Encoder.FORM.encode(s);
   }
 
   /**
@@ -90,10 +109,9 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL decode in lenient mode
-   *
-   * @see Decoder#lenient
+   * @deprecated use {@link #getLenientDecoder()}
    */
+  @Deprecated
   public static String decodeLenient(@Nonnull CharSequence s) {
     return Decoder.LENIENT.decode(s);
   }
@@ -219,17 +237,17 @@ public final class RSUrlCodec {
   @Immutable
   public static final class Decoder {
 
-    private static final Decoder STRICT = new Decoder(UTF_8, true, false);
+    private static final Decoder STRICT = new Decoder(UTF_8, true, true);
     private static final Decoder LENIENT = STRICT.lenient();
 
     private final Charset charset;
     private final boolean plusToSpace;
-    private final boolean lenient;
+    private final boolean strict;
 
-    private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean lenient) {
+    private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean strict) {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
-      this.lenient = lenient;
+      this.strict = strict;
     }
 
     /**
@@ -239,7 +257,7 @@ public final class RSUrlCodec {
       Objects.requireNonNull(charset);
       if (this.charset.equals(charset))
         return this;
-      return new Decoder(charset, this.plusToSpace, this.lenient);
+      return new Decoder(charset, this.plusToSpace, this.strict);
     }
 
     /**
@@ -250,7 +268,7 @@ public final class RSUrlCodec {
     public Decoder decodePlusToSpace(boolean plusToSpace) {
       if (this.plusToSpace == plusToSpace)
         return this;
-      return new Decoder(this.charset, plusToSpace, this.lenient);
+      return new Decoder(this.charset, plusToSpace, this.strict);
     }
 
     /**
@@ -258,31 +276,27 @@ public final class RSUrlCodec {
      *         {@link IllegalArgumentException}
      */
     public Decoder strict() {
-      return withLenient(false);
+      return withStrict(true);
     }
 
     /**
      * @return a new {@link Decoder} in lenient mode, meaning invalid URL encodings will be ignored
      */
     public Decoder lenient() {
-      return withLenient(true);
+      return withStrict(false);
     }
 
-    private Decoder withLenient(boolean lenient) {
-      if (this.lenient == lenient)
+    private Decoder withStrict(boolean strict) {
+      if (this.strict == strict)
         return this;
-      return new Decoder(this.charset, this.plusToSpace, lenient);
+      return new Decoder(this.charset, this.plusToSpace, strict);
     }
 
     /**
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      if (lenient) {
-        return decodeLenient(s);
-      } else {
-        return decodeStrict(s);
-      }
+      return strict ? decodeStrict(s) : decodeLenient(s);
     }
 
     private String decodeStrict(@Nonnull CharSequence s) {
@@ -327,7 +341,6 @@ public final class RSUrlCodec {
              */
             buf.put((byte) '%');
             i -= 2;
-            continue;
           }
         } else if (plusToSpace && c == '+') {
           buf.put((byte) ' ');

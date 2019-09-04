@@ -31,7 +31,7 @@ public class RSUrlCodecTest {
         + "%2F%20%3A%20%3B%20%3D%20%3F%20%40%20%5B%20%5D";
     assertEquals(expected, RSUrlCodec.encode(reserved));
     assertEquals(reserved, RSUrlCodec.decode(expected));
-    assertEquals(reserved, RSUrlCodec.decodeLenient(expected));
+    assertEquals(reserved, RSUrlCodec.getLenientDecoder().decode(expected));
     assertEquals(reserved, URLDecoder.decode(expected, UTF_8.name()));
   }
 
@@ -46,10 +46,10 @@ public class RSUrlCodecTest {
           .encodeSpaceToPlus(false).encode(original)));
       assertEquals(original, RSUrlCodec.decode(RSUrlCodec.getEncoder().withSafeCharPredicate(pred)
           .encodeSpaceToPlus(true).encode(original)));
-      assertEquals(original, RSUrlCodec.decodeLenient(RSUrlCodec.encode(original)));
-      assertEquals(original, RSUrlCodec.decodeLenient(RSUrlCodec.getEncoder()
+      assertEquals(original, RSUrlCodec.getLenientDecoder().decode(RSUrlCodec.encode(original)));
+      assertEquals(original, RSUrlCodec.getLenientDecoder().decode(RSUrlCodec.getEncoder()
           .withSafeCharPredicate(pred).encodeSpaceToPlus(false).encode(original)));
-      assertEquals(original, RSUrlCodec.decodeLenient(RSUrlCodec.getEncoder()
+      assertEquals(original, RSUrlCodec.getLenientDecoder().decode(RSUrlCodec.getEncoder()
           .withSafeCharPredicate(pred).encodeSpaceToPlus(true).encode(original)));
       assertEquals(original, URLDecoder.decode(RSUrlCodec.getEncoder().withSafeCharPredicate(pred)
           .encodeSpaceToPlus(false).encode(original), UTF_8.name()));
@@ -70,7 +70,7 @@ public class RSUrlCodecTest {
     });
     reservedMappings.forEach((k, v) -> {
       assertEquals(k, RSUrlCodec.decode(v));
-      assertEquals(k, RSUrlCodec.decodeLenient(v));
+      assertEquals(k, RSUrlCodec.getLenientDecoder().decode(v));
       try {
         assertEquals(k, URLDecoder.decode(v, UTF_8.name()));
       } catch (UnsupportedEncodingException e) {
@@ -89,7 +89,7 @@ public class RSUrlCodecTest {
         "%3Ch2%3E%3Cspan%20class%3D%22mw-headline%22%20id%3D%22Percent-encoding_in_a_URI%22%3EPercent-encoding%20in%20a%20URI%3C%2Fspan%3E%3Cspan%20class%3D%22mw-editsection%22%3E%3Cspan%20class%3D%22mw-editsection-bracket%22%3E%5B%3C%2Fspan%3E%3Ca%20href%3D%22%2Fw%2Findex.php%3Ftitle%3DPercent-encoding%26amp%3Baction%3Dedit%26amp%3Bsection%3D1%22%20title%3D%22Edit%20section%3A%20Percent-encoding%20in%20a%20URI%22%3Eedit%3C%2Fa%3E%3Cspan%20class%3D%22mw-editsection-bracket%22%3E%5D%3C%2Fspan%3E%3C%2Fspan%3E%3C%2Fh2%3E%0D%0A%3Ch3%3E%3Cspan%20class%3D%22mw-headline%22%20id%3D%22Types_of_URI_characters%22%3ETypes%20of%20URI%20characters%3C%2Fspan%3E%3Cspan%20class%3D%22mw-editsection%22%3E%3Cspan%20class%3D%22mw-editsection-bracket%22%3E%5B%3C%2Fspan%3E%3Ca%20href%3D%22%2Fw%2Findex.php%3Ftitle%3DPercent-encoding%26amp%3Baction%3Dedit%26amp%3Bsection%3D2%22%20title%3D%22Edit%20section%3A%20Types%20of%20URI%20characters%22%3Eedit%3C%2Fa%3E%3Cspan%20class%3D%22mw-editsection-bracket%22%3E%5D%3C%2Fspan%3E%3C%2Fspan%3E%3C%2Fh3%3E%0D%0A%3Cp%3EThe%20characters%20allowed%20in%20a%20URI%20are%20either%20%3Ci%3Ereserved%3C%2Fi%3E%20or%20%3Ci%3Eunreserved%3C%2Fi%3E%20%28or%20a%20percent%20character%20as%20part%20of%20a%20percent-encoding%29.%20%3Ci%3EReserved%3C%2Fi%3E%20characters%20are%20those%20characters%20that%20sometimes%20have%20special%20meaning.%20For%20example%2C%20%3Ca%20href%3D%22%2Fwiki%2FForward_slash%22%20class%3D%22mw-redirect%22%20title%3D%22Forward%20slash%22%3Eforward%20slash%3C%2Fa%3E%20characters%20are%20used%20to%20separate%20different%20parts%20of%20a%20URL%20%28or%20more%20generally%2C%20a%20URI%29.%20%3Ci%3EUnreserved%3C%2Fi%3E%20characters%20have%20no%20such%20meanings.%20Using%20percent-encoding%2C%20reserved%20characters%20are%20represented%20using%20special%20character%20sequences.%20The%20sets%20of%20reserved%20and%20unreserved%20characters%20and%20the%20circumstances%20under%20which%20certain%20reserved%20characters%20have%20special%20meaning%20have%20changed%20slightly%20with%20each%20revision%20of%20specifications%20that%20govern%20URIs%20and%20URI%20schemes.%3C%2Fp%3E";
     assertEquals(encoded, RSUrlCodec.encode(original));
     assertEquals(original, RSUrlCodec.decode(encoded));
-    assertEquals(original, RSUrlCodec.decodeLenient(encoded));
+    assertEquals(original, RSUrlCodec.getLenientDecoder().decode(encoded));
     assertEquals(original, URLDecoder.decode(encoded, UTF_8.name()));
   }
 
@@ -97,7 +97,7 @@ public class RSUrlCodecTest {
   public void testFormCompatibility() throws Exception {
     for (int i = 0; i < 1024; i++) {
       final String fakeString = RandomStringUtils.random(1024);
-      final String ourEncoded = RSUrlCodec.encodeForm(fakeString);
+      final String ourEncoded = RSUrlCodec.getFormEncoder().encode(fakeString);
       final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
       assertEquals(javaEncoded, ourEncoded);
     }
@@ -162,7 +162,7 @@ public class RSUrlCodecTest {
   @Test
   public void testDecodingLowerCase() throws Exception {
     assertEquals("M", RSUrlCodec.decode("%4d"));
-    assertEquals("M", RSUrlCodec.decodeLenient("%4d"));
+    assertEquals("M", RSUrlCodec.getLenientDecoder().decode("%4d"));
   }
 
   @Test
@@ -171,27 +171,27 @@ public class RSUrlCodecTest {
       RSUrlCodec.decode("%%44");
       fail();
     } catch (IllegalArgumentException expected) {}
-    assertEquals("%D", RSUrlCodec.decodeLenient("%%44"));
+    assertEquals("%D", RSUrlCodec.getLenientDecoder().decode("%%44"));
     try {
       RSUrlCodec.decode("%4%44");
       fail();
     } catch (IllegalArgumentException expected) {}
-    assertEquals("%4D", RSUrlCodec.decodeLenient("%4%44"));
+    assertEquals("%4D", RSUrlCodec.getLenientDecoder().decode("%4%44"));
     try {
       RSUrlCodec.decode("%4.%44");
       fail();
     } catch (IllegalArgumentException expected) {}
-    assertEquals("%4.D", RSUrlCodec.decodeLenient("%4.%44"));
+    assertEquals("%4.D", RSUrlCodec.getLenientDecoder().decode("%4.%44"));
     try {
       RSUrlCodec.decode("%44%4");
       fail();
     } catch (IllegalArgumentException expected) {}
-    assertEquals("D%4", RSUrlCodec.decodeLenient("%44%4"));
+    assertEquals("D%4", RSUrlCodec.getLenientDecoder().decode("%44%4"));
     try {
       RSUrlCodec.decode("%44%");
       fail();
     } catch (IllegalArgumentException expected) {}
-    assertEquals("D%", RSUrlCodec.decodeLenient("%44%"));
+    assertEquals("D%", RSUrlCodec.getLenientDecoder().decode("%44%"));
   }
 
 }
