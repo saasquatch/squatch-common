@@ -1,7 +1,6 @@
 package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -27,7 +26,7 @@ public final class RSUrlCodec {
    * URLEncoder does by default.
    */
   public static String encodeForm(@Nonnull CharSequence s) {
-    return encode(s, RSUrlCodec::isWwwFormUrlSafe, true);
+    return Encoder.FORM.encode(s);
   }
 
   /**
@@ -36,7 +35,7 @@ public final class RSUrlCodec {
    * standard came out in 2005, way after URLEncoder was written.
    */
   public static String encodeStandard(@Nonnull CharSequence s) {
-    return encode(s, RSUrlCodec::isRFC3986Unreseved, false);
+    return Encoder.RFC3986.encode(s);
   }
 
   /**
@@ -44,92 +43,29 @@ public final class RSUrlCodec {
    */
   public static String encode(@Nonnull CharSequence s, @Nonnull IntPredicate isSafeChar,
       boolean spaceToPlus) {
-    return encode(s, UTF_8, isSafeChar, spaceToPlus);
-  }
-
-  /**
-   * URL encode all chars except for the safe chars.
-   *
-   * @param s the input String
-   * @param charset the {@link Charset} to use
-   * @param isSafeChar a predicate that returns true if the input is considered safe and shouldn't
-   *        be encoded
-   * @param spaceToPlus whether ' ' should be turned into '+'. Note that isSafeChar takes precedence
-   *        over spaceToPlus.
-   */
-  public static String encode(@Nonnull CharSequence s, @Nonnull Charset charset,
-      @Nonnull IntPredicate isSafeChar, boolean spaceToPlus) {
-    final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
-    final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
-    while (bytes.hasRemaining()) {
-      final int b = bytes.get() & 0xFF;
-      if (isSafeChar.test(b)) {
-        buf.put((char) b);
-      } else if (spaceToPlus && b == ' ') {
-        buf.put('+');
-      } else {
-        buf.put('%');
-        buf.put(hexDigitUpper(b >> 4));
-        buf.put(hexDigitUpper(b));
-      }
-    }
-    buf.flip();
-    return buf.toString();
+    return Encoder.RFC3986.withSafeCharPredicate(isSafeChar).encodeSpaceToPlus(spaceToPlus)
+        .encode(s);
   }
 
   /**
    * Convenience method for {@link RSUrlCodec#decode(CharSequence, boolean)}
    */
   public static String decode(@Nonnull CharSequence s) {
-    // We want to decode plus to space by default
-    return decode(s, true);
+    return Decoder.STRICT.decode(s);
   }
 
   /**
    * Convenience method for {@link RSUrlCodec#decode(CharSequence, Charset, boolean)} with UTF-8
    */
   public static String decode(@Nonnull CharSequence s, boolean plusToSpace) {
-    return decode(s, UTF_8, plusToSpace);
-  }
-
-  /**
-   * URL decode
-   *
-   * @param s the input String
-   * @param charset the {@link Charset} to use
-   * @param plusToSpace whether '+' should be turned into ' '
-   * @throws IllegalArgumentException if the input is invalid
-   */
-  public static String decode(@Nonnull CharSequence s, @Nonnull Charset charset,
-      boolean plusToSpace) {
-    final CharBuffer chars = CharBuffer.wrap(s);
-    final ByteBuffer buf = ByteBuffer.allocate(s.length());
-    while (chars.hasRemaining()) {
-      final char c = chars.get();
-      if (c == '%') {
-        try {
-          final int u = digit16Strict(chars.get());
-          final int l = digit16Strict(chars.get());
-          buf.put((byte) ((u << 4) + l));
-        } catch (BufferUnderflowException e) {
-          throw new IllegalArgumentException("Invalid URL encoding: ", e);
-        }
-      } else if (plusToSpace && c == '+') {
-        buf.put((byte) ' ');
-      } else {
-        buf.put((byte) c);
-      }
-    }
-    buf.flip();
-    return charset.decode(buf).toString();
+    return Decoder.STRICT.decodePlusToSpace(plusToSpace).decode(s);
   }
 
   /**
    * Convenience method for {@link RSUrlCodec#decodeLenient(CharSequence, boolean)}
    */
   public static String decodeLenient(@Nonnull CharSequence s) {
-    // We want to decode plus to space by default
-    return decodeLenient(s, true);
+    return Decoder.LENIENT.decode(s);
   }
 
   /**
@@ -137,46 +73,16 @@ public final class RSUrlCodec {
    * UTF-8
    */
   public static String decodeLenient(@Nonnull CharSequence s, boolean plusToSpace) {
-    return decodeLenient(s, UTF_8, plusToSpace);
-  }
-
-  /**
-   * Same as {@link #decode(String, Charset, boolean)} but instead of failing, it will ignore
-   * invalid digits and invalid sequences
-   */
-  public static String decodeLenient(@Nonnull CharSequence s, @Nonnull Charset charset,
-      boolean plusToSpace) {
-    // Not using CharBuffer since we'll need to rewind
-    final ByteBuffer buf = ByteBuffer.allocate(s.length());
-    for (int i = 0; i < s.length();) {
-      final char c = s.charAt(i++);
-      if (c == '%' && s.length() - i >= 2) {
-        final int u = digit16(s.charAt(i++));
-        final int l = digit16(s.charAt(i++));
-        if (u != -1 && l != -1) {
-          // Both digits are valid.
-          buf.put((byte) ((u << 4) + l));
-        } else {
-          /*
-           * The sequence has an invalid digit, so we need to output the '%' and rewind, since the 2
-           * characters can potentially start a new encoding sequence.
-           */
-          buf.put((byte) '%');
-          i -= 2;
-          continue;
-        }
-      } else if (plusToSpace && c == '+') {
-        buf.put((byte) ' ');
-      } else {
-        buf.put((byte) c);
-      }
-    }
-    buf.flip();
-    return charset.decode(buf).toString();
+    return Decoder.LENIENT.decodePlusToSpace(plusToSpace).decode(s);
   }
 
   @Immutable
   public static final class Encoder {
+
+    private static final Encoder RFC3986 =
+        new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true);
+    private static final Encoder FORM =
+        new Encoder(UTF_8, RSUrlCodec::isWwwFormUrlSafe, true, true);
 
     private final Charset charset;
     private final IntPredicate safeCharPredicate;
@@ -247,11 +153,14 @@ public final class RSUrlCodec {
   @Immutable
   public static final class Decoder {
 
+    private static final Decoder STRICT = new Decoder(UTF_8, true, false);
+    private static final Decoder LENIENT = new Decoder(UTF_8, true, true);
+
     private final Charset charset;
     private final boolean plusToSpace;
     private final boolean lenient;
 
-    private Decoder(Charset charset, boolean plusToSpace, boolean lenient) {
+    private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean lenient) {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
       this.lenient = lenient;
@@ -329,14 +238,6 @@ public final class RSUrlCodec {
       return charset.decode(buf).toString();
     }
 
-  }
-
-  private static char hexDigitUpper(int b) {
-    final int digit = b & 0xF;
-    if (digit < 10) {
-      return (char) ('0' + digit);
-    }
-    return (char) ('A' - 10 + digit);
   }
 
   private static char hexDigit(int b, boolean upperCase) {
