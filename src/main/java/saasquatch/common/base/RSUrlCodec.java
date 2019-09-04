@@ -53,14 +53,6 @@ public final class RSUrlCodec {
   }
 
   /**
-   * @deprecated use {@link #encode(CharSequence)}
-   */
-  @Deprecated
-  public static String encodeStandard(@Nonnull CharSequence s) {
-    return Encoder.RFC3986.encode(s);
-  }
-
-  /**
    * URL encode all characters except for the unreserved ones.<br>
    * This is the standard RFC 3986 behavior. Java's default URLEncoder does not do this because the
    * standard came out in 2005, way after URLEncoder was written.
@@ -68,6 +60,14 @@ public final class RSUrlCodec {
    * @see #getEncoder()
    */
   public static String encode(@Nonnull CharSequence s) {
+    return Encoder.RFC3986.encode(s);
+  }
+
+  /**
+   * @deprecated use {@link #encode(CharSequence)}
+   */
+  @Deprecated
+  public static String encodeStandard(@Nonnull CharSequence s) {
     return Encoder.RFC3986.encode(s);
   }
 
