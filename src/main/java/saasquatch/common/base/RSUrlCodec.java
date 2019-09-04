@@ -24,7 +24,7 @@ public final class RSUrlCodec {
    * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
    * URLEncoder does by default.
    */
-  public static String encodeForm(@Nonnull String s) {
+  public static String encodeForm(@Nonnull CharSequence s) {
     return encode(s, RSUrlCodec::isWwwFormUrlSafe, true);
   }
 
@@ -33,14 +33,14 @@ public final class RSUrlCodec {
    * This is the standard RFC 3986 behavior. Java's default URLEncoder does not do this because the
    * standard came out in 2005, way after URLEncoder was written.
    */
-  public static String encodeStandard(@Nonnull String s) {
+  public static String encodeStandard(@Nonnull CharSequence s) {
     return encode(s, RSUrlCodec::isRFC3986Unreseved, false);
   }
 
   /**
-   * Convenience method for {@link #encode(String, Charset, IntPredicate, boolean)} with UTF-8
+   * Convenience method for {@link #encode(CharSequence, Charset, IntPredicate, boolean)} with UTF-8
    */
-  public static String encode(@Nonnull String s, @Nonnull IntPredicate isSafeChar,
+  public static String encode(@Nonnull CharSequence s, @Nonnull IntPredicate isSafeChar,
       boolean spaceToPlus) {
     return encode(s, UTF_8, isSafeChar, spaceToPlus);
   }
@@ -55,9 +55,9 @@ public final class RSUrlCodec {
    * @param spaceToPlus whether ' ' should be turned into '+'. Note that isSafeChar takes precedence
    *        over spaceToPlus.
    */
-  public static String encode(@Nonnull String s, @Nonnull Charset charset,
+  public static String encode(@Nonnull CharSequence s, @Nonnull Charset charset,
       @Nonnull IntPredicate isSafeChar, boolean spaceToPlus) {
-    final ByteBuffer bytes = charset.encode(s);
+    final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
     final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
     while (bytes.hasRemaining()) {
       final int b = bytes.get() & 0xFF;
@@ -67,33 +67,26 @@ public final class RSUrlCodec {
         buf.put('+');
       } else {
         buf.put('%');
-        buf.put(hexDigitUpper((b >> 4) & 0xF));
-        buf.put(hexDigitUpper(b & 0xF));
+        buf.put(hexDigitUpper(b >> 4));
+        buf.put(hexDigitUpper(b));
       }
     }
     buf.flip();
     return buf.toString();
   }
 
-  public static char hexDigitUpper(int digit) {
-    if (digit < 10) {
-      return (char) ('0' + digit);
-    }
-    return (char) ('A' - 10 + digit);
-  }
-
   /**
-   * Convenience method for {@link RSUrlCodec#decode(String, boolean)}
+   * Convenience method for {@link RSUrlCodec#decode(CharSequence, boolean)}
    */
-  public static String decode(@Nonnull String s) {
+  public static String decode(@Nonnull CharSequence s) {
     // We want to decode plus to space by default
     return decode(s, true);
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decode(String, Charset, boolean)}
+   * Convenience method for {@link RSUrlCodec#decode(CharSequence, Charset, boolean)} with UTF-8
    */
-  public static String decode(@Nonnull String s, boolean plusToSpace) {
+  public static String decode(@Nonnull CharSequence s, boolean plusToSpace) {
     return decode(s, UTF_8, plusToSpace);
   }
 
@@ -105,7 +98,8 @@ public final class RSUrlCodec {
    * @param plusToSpace whether '+' should be turned into ' '
    * @throws IllegalArgumentException if the input is invalid
    */
-  public static String decode(@Nonnull String s, @Nonnull Charset charset, boolean plusToSpace) {
+  public static String decode(@Nonnull CharSequence s, @Nonnull Charset charset,
+      boolean plusToSpace) {
     final CharBuffer chars = CharBuffer.wrap(s);
     final ByteBuffer buf = ByteBuffer.allocate(s.length());
     while (chars.hasRemaining()) {
@@ -128,27 +122,19 @@ public final class RSUrlCodec {
     return charset.decode(buf).toString();
   }
 
-  private static int digit16Strict(char c) {
-    final int i = Character.digit(c, 16);
-    if (i == -1) {
-      throw new IllegalArgumentException(
-          "Invalid URL encoding: not a valid digit (radix 16): " + c);
-    }
-    return i;
-  }
-
   /**
-   * Convenience method for {@link RSUrlCodec#decodeLenient(String, boolean)}
+   * Convenience method for {@link RSUrlCodec#decodeLenient(CharSequence, boolean)}
    */
-  public static String decodeLenient(@Nonnull String s) {
+  public static String decodeLenient(@Nonnull CharSequence s) {
     // We want to decode plus to space by default
     return decodeLenient(s, true);
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decodeLenient(String, Charset, boolean)}
+   * Convenience method for {@link RSUrlCodec#decodeLenient(CharSequence, Charset, boolean)} with
+   * UTF-8
    */
-  public static String decodeLenient(@Nonnull String s, boolean plusToSpace) {
+  public static String decodeLenient(@Nonnull CharSequence s, boolean plusToSpace) {
     return decodeLenient(s, UTF_8, plusToSpace);
   }
 
@@ -156,17 +142,15 @@ public final class RSUrlCodec {
    * Same as {@link #decode(String, Charset, boolean)} but instead of failing, it will ignore
    * invalid digits and invalid sequences
    */
-  public static String decodeLenient(@Nonnull String s, @Nonnull Charset charset,
+  public static String decodeLenient(@Nonnull CharSequence s, @Nonnull Charset charset,
       boolean plusToSpace) {
-    final char[] chars = s.toCharArray(); // Use char array since we'll need to rewind
+    // Not using CharBuffer since we'll need to rewind
     final ByteBuffer buf = ByteBuffer.allocate(s.length());
-    for (int i = 0; i < chars.length;) {
-      final char c = chars[i++];
-      if (c == '%' && chars.length - i >= 2) {
-        final char uc = chars[i++];
-        final char lc = chars[i++];
-        final int u = Character.digit(uc, 16);
-        final int l = Character.digit(lc, 16);
+    for (int i = 0; i < s.length();) {
+      final char c = s.charAt(i++);
+      if (c == '%' && s.length() - i >= 2) {
+        final int u = digit16(s.charAt(i++));
+        final int l = digit16(s.charAt(i++));
         if (u != -1 && l != -1) {
           // Both digits are valid.
           buf.put((byte) ((u << 4) + l));
@@ -187,6 +171,35 @@ public final class RSUrlCodec {
     }
     buf.flip();
     return charset.decode(buf).toString();
+  }
+
+  private static char hexDigitUpper(int b) {
+    final int digit = b & 0xF;
+    if (digit < 10) {
+      return (char) ('0' + digit);
+    }
+    return (char) ('A' - 10 + digit);
+  }
+
+  private static int digit16(char c) {
+    if (c >= '0' && c <= '9') {
+      return c - '0';
+    } else if (c >= 'A' && c <= 'F') {
+      return c + 10 - 'A';
+    } else if (c >= 'a' && c <= 'f') {
+      return c + 10 - 'a';
+    } else {
+      return -1;
+    }
+  }
+
+  private static int digit16Strict(char c) {
+    final int i = digit16(c);
+    if (i == -1) {
+      throw new IllegalArgumentException(
+          "Invalid URL encoding: not a valid digit (radix 16): " + c);
+    }
+    return i;
   }
 
   private static boolean isAsciiAlphaNum(int c) {

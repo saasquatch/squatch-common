@@ -147,6 +147,12 @@ public class RSUrlCodecTest {
   }
 
   @Test
+  public void testDecodingLowerCase() throws Exception {
+    assertEquals("M", RSUrlCodec.decode("%4d"));
+    assertEquals("M", RSUrlCodec.decodeLenient("%4d"));
+  }
+
+  @Test
   public void testInvalid() {
     try {
       RSUrlCodec.decode("%%44");
