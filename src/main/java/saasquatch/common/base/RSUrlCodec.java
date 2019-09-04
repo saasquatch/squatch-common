@@ -39,17 +39,26 @@ public final class RSUrlCodec {
   }
 
   /**
+   * @deprecated use {@link #encode(CharSequence)}
+   */
+  @Deprecated
+  public static String encodeStandard(@Nonnull CharSequence s) {
+    return encode(s);
+  }
+
+  /**
    * URL encode all characters except for the unreserved ones.<br>
    * This is the standard RFC 3986 behavior. Java's default URLEncoder does not do this because the
    * standard came out in 2005, way after URLEncoder was written.
    */
-  public static String encodeStandard(@Nonnull CharSequence s) {
+  public static String encode(@Nonnull CharSequence s) {
     return Encoder.RFC3986.encode(s);
   }
 
   /**
-   * Convenience method for {@link #encode(CharSequence, Charset, IntPredicate, boolean)} with UTF-8
+   * @deprecated use {@link #getEncoder()}
    */
+  @Deprecated
   public static String encode(@Nonnull CharSequence s, @Nonnull IntPredicate isSafeChar,
       boolean spaceToPlus) {
     return Encoder.RFC3986.withSafeCharPredicate(isSafeChar).encodeSpaceToPlus(spaceToPlus)
@@ -64,8 +73,9 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decode(CharSequence, Charset, boolean)} with UTF-8
+   * @deprecated use {@link #getDecoder()}
    */
+  @Deprecated
   public static String decode(@Nonnull CharSequence s, boolean plusToSpace) {
     return Decoder.STRICT.decodePlusToSpace(plusToSpace).decode(s);
   }
@@ -78,9 +88,9 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decodeLenient(CharSequence, Charset, boolean)} with
-   * UTF-8
+   * @deprecated use {@link #getDecoder()}
    */
+  @Deprecated
   public static String decodeLenient(@Nonnull CharSequence s, boolean plusToSpace) {
     return Decoder.LENIENT.decodePlusToSpace(plusToSpace).decode(s);
   }
