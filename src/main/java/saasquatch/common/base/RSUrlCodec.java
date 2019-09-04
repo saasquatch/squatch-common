@@ -22,10 +22,16 @@ public final class RSUrlCodec {
 
   private RSUrlCodec() {}
 
+  /**
+   * @return a singleton {@link Encoder} with the standard RFC 3986 behavior.
+   */
   public static Encoder getEncoder() {
     return Encoder.RFC3986;
   }
 
+  /**
+   * @return a singleton {@link Decoder#strict() strict} {@link Decoder}.
+   */
   public static Decoder getDecoder() {
     return Decoder.STRICT;
   }
@@ -66,7 +72,10 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decode(CharSequence, boolean)}
+   * URL decode in strict mode
+   *
+   * @throws IllegalArgumentException if the input contains invalid URL encodings
+   * @see Decoder#strict()
    */
   public static String decode(@Nonnull CharSequence s) {
     return Decoder.STRICT.decode(s);
@@ -81,7 +90,9 @@ public final class RSUrlCodec {
   }
 
   /**
-   * Convenience method for {@link RSUrlCodec#decodeLenient(CharSequence, boolean)}
+   * URL decode in lenient mode
+   *
+   * @see Decoder#lenient
    */
   public static String decodeLenient(@Nonnull CharSequence s) {
     return Decoder.LENIENT.decode(s);
@@ -95,6 +106,12 @@ public final class RSUrlCodec {
     return Decoder.LENIENT.decodePlusToSpace(plusToSpace).decode(s);
   }
 
+  /**
+   * URL Encoder
+   *
+   * @author sli
+   * @see RSUrlCodec#getEncoder()
+   */
   @Immutable
   public static final class Encoder {
 
@@ -116,6 +133,9 @@ public final class RSUrlCodec {
       this.upperCase = upperCase;
     }
 
+    /**
+     * @return a new {@link Encoder} with the specified {@link Charset}
+     */
     public Encoder withCharset(@Nonnull Charset charset) {
       Objects.requireNonNull(charset);
       if (this.charset.equals(charset))
@@ -123,21 +143,39 @@ public final class RSUrlCodec {
       return new Encoder(charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
+    /**
+     * @return a new {@link Encoder} with the specified predicate that determines whether a
+     *         character is safe and does not need to be encoded
+     */
     public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
       Objects.requireNonNull(safeCharPredicate);
       return new Encoder(this.charset, safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
+    /**
+     * @param spaceToPlus whether ' ' should be encoded to '+'. If false, ' ' characters are either
+     *        left alone or encoded to "%20" depending on the safeCharPredicate. Note that the
+     *        safeCharPredicate takes precedence over this.
+     *
+     * @return a new {@link Encoder} with the specified config
+     * @see #withSafeCharPredicate(IntPredicate)
+     */
     public Encoder encodeSpaceToPlus(boolean spaceToPlus) {
       if (this.spaceToPlus == spaceToPlus)
         return this;
       return new Encoder(this.charset, this.safeCharPredicate, spaceToPlus, this.upperCase);
     }
 
+    /**
+     * @return a new {@link Encoder} that uses upper case hex digits
+     */
     public Encoder upperCase() {
       return withUpperCase(true);
     }
 
+    /**
+     * @return a new {@link Encoder} that uses lower case hex digits
+     */
     public Encoder lowerCase() {
       return withUpperCase(false);
     }
@@ -148,6 +186,9 @@ public final class RSUrlCodec {
       return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, upperCase);
     }
 
+    /**
+     * URL encode
+     */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
       final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
@@ -169,11 +210,17 @@ public final class RSUrlCodec {
 
   }
 
+  /**
+   * URL decoder
+   *
+   * @author sli
+   * @see RSUrlCodec#getDecoder()
+   */
   @Immutable
   public static final class Decoder {
 
     private static final Decoder STRICT = new Decoder(UTF_8, true, false);
-    private static final Decoder LENIENT = new Decoder(UTF_8, true, true);
+    private static final Decoder LENIENT = STRICT.lenient();
 
     private final Charset charset;
     private final boolean plusToSpace;
@@ -185,6 +232,9 @@ public final class RSUrlCodec {
       this.lenient = lenient;
     }
 
+    /**
+     * @return a new {@link Decoder} with the specified {@link Charset}
+     */
     public Decoder withCharset(@Nonnull Charset charset) {
       Objects.requireNonNull(charset);
       if (this.charset.equals(charset))
@@ -192,16 +242,28 @@ public final class RSUrlCodec {
       return new Decoder(charset, this.plusToSpace, this.lenient);
     }
 
+    /**
+     * @param plusToSpace whether '+' should be decoded to ' '. If not, '+' characters will be left
+     *        alone.
+     * @return a new {@link Decoder} with the specified config
+     */
     public Decoder decodePlusToSpace(boolean plusToSpace) {
       if (this.plusToSpace == plusToSpace)
         return this;
       return new Decoder(this.charset, plusToSpace, this.lenient);
     }
 
+    /**
+     * @return a new {@link Decoder} in strict mode, meaning invalid URL encodings will cause an
+     *         {@link IllegalArgumentException}
+     */
     public Decoder strict() {
       return withLenient(false);
     }
 
+    /**
+     * @return a new {@link Decoder} in lenient mode, meaning invalid URL encodings will be ignored
+     */
     public Decoder lenient() {
       return withLenient(true);
     }
@@ -212,6 +274,9 @@ public final class RSUrlCodec {
       return new Decoder(this.charset, this.plusToSpace, lenient);
     }
 
+    /**
+     * URL decode
+     */
     public String decode(@Nonnull CharSequence s) {
       if (lenient) {
         return decodeLenient(s);
