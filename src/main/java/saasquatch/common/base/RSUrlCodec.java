@@ -240,15 +240,15 @@ public final class RSUrlCodec {
         }
 
       };
-      final PrimitiveIterator.OfInt encodedCharIter = encode(bytesIter);
-      final Spliterator.OfInt encodedCharSpliterator =
-          Spliterators.spliteratorUnknownSize(encodedCharIter, 0);
-      final int[] arr = StreamSupport.intStream(encodedCharSpliterator, false).toArray();
-      return new String(arr, 0, arr.length);
+      final PrimitiveIterator.OfInt encodedCharIterator = encode(bytesIter);
+      final Spliterator.OfInt encodedCharSpliterator = Spliterators.spliteratorUnknownSize(
+          encodedCharIterator, Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE);
+      final int[] charArray = StreamSupport.intStream(encodedCharSpliterator, false).toArray();
+      return new String(charArray, 0, charArray.length);
     }
 
     @RSBeta
-    public PrimitiveIterator.OfInt encode(@Nonnull PrimitiveIterator.OfInt byteIter) {
+    public PrimitiveIterator.OfInt encode(@Nonnull PrimitiveIterator.OfInt byteIterator) {
       return new PrimitiveIterator.OfInt() {
 
         final CharBuffer buf;
@@ -274,12 +274,12 @@ public final class RSUrlCodec {
         }
 
         private void tryProcess() {
-          if (buf.hasRemaining() || !byteIter.hasNext()) {
+          if (buf.hasRemaining() || !byteIterator.hasNext()) {
             return;
           }
           buf.flip();
           buf.clear();
-          final int b = byteIter.nextInt() & 0xFF;
+          final int b = byteIterator.nextInt() & 0xFF;
           if (safeCharPredicate.test(b)) {
             buf.put((char) b);
           } else if (spaceToPlus && b == ' ') {
