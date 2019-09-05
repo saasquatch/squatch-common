@@ -61,7 +61,9 @@ public class RSHttpHeadersTest {
   @Test
   public void testGeneratingBasicAuthWithNull() {
     // No exception should be thrown
-    RSHttpHeaders.basicAuth(null, null);
+    final String emptyBasic = "Basic Og==";
+    assertEquals(emptyBasic, RSHttpHeaders.basicAuth(null, null));
+    assertEquals(emptyBasic, RSHttpHeaders.basicAuth("", ""));
   }
 
   @Test
