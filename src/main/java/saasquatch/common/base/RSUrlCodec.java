@@ -220,28 +220,18 @@ public final class RSUrlCodec {
      */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
-      final int bytesLen = bytes.remaining(); // record the length here
-      final PrimitiveIterator.OfInt bytesIter = new PrimitiveIterator.OfInt() {
-
-        @Override
-        public boolean hasNext() {
-          return bytes.hasRemaining();
+      final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
+      while (bytes.hasRemaining()) {
+        final int b = bytes.get() & 0xFF;
+        if (safeCharPredicate.test(b)) {
+          buf.put((char) b);
+        } else if (spaceToPlus && b == ' ') {
+          buf.put('+');
+        } else {
+          buf.put('%');
+          buf.put(hexDigit(b >> 4, upperCase));
+          buf.put(hexDigit(b, upperCase));
         }
-
-        @Override
-        public int nextInt() {
-          try {
-            return bytes.get();
-          } catch (BufferUnderflowException e) {
-            throw new NoSuchElementException(e.getMessage());
-          }
-        }
-
-      };
-      final PrimitiveIterator.OfInt encodedCharIterator = encode(bytesIter);
-      final CharBuffer buf = CharBuffer.allocate(bytesLen * 3);
-      while (encodedCharIterator.hasNext()) {
-        buf.put((char) encodedCharIterator.nextInt());
       }
       buf.flip();
       return buf.toString();
