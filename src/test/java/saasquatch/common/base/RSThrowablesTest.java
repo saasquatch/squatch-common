@@ -2,6 +2,7 @@ package saasquatch.common.base;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -123,14 +124,14 @@ public class RSThrowablesTest {
       RSThrowables.wrapAndThrow(runtimeException);
       fail();
     } catch (Throwable t) {
-      assertTrue(t == runtimeException, "We should get back the exact same RuntimeException");
+      assertSame(runtimeException, t, "We should get back the exact same RuntimeException");
     }
     final Error error = new AssertionError("foo", new ParseException("foo", 0));
     try {
       RSThrowables.wrapAndThrow(error);
       fail();
     } catch (Throwable t) {
-      assertTrue(t == error, "We should get back the exact same Error");
+      assertSame(error, t, "We should get back the exact same Error");
     }
     final IOException ioException = new IOException("foo", new Error());
     try {
@@ -138,7 +139,7 @@ public class RSThrowablesTest {
       fail();
     } catch (Throwable t) {
       assertTrue(t instanceof UncheckedIOException, "We should get back an UncheckedIOException");
-      assertTrue(t.getCause() == ioException, "The cause should be the exact same IOException");
+      assertSame(ioException, t.getCause(), "The cause should be the exact same IOException");
     }
     final ParseException parseException = new ParseException("foo", 0);
     try {
@@ -146,7 +147,7 @@ public class RSThrowablesTest {
       fail();
     } catch (Throwable t) {
       assertTrue(t instanceof UndeclaredThrowableException);
-      assertTrue(t.getCause() == parseException);
+      assertSame(parseException, t.getCause());
     }
   }
 
