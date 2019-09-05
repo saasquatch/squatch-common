@@ -1,17 +1,17 @@
 package saasquatch.common.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.google.common.collect.ImmutableSet;
 
 public class RSHttpHeadersTest {
@@ -38,10 +38,10 @@ public class RSHttpHeadersTest {
       assertEquals("open:sesame", userPass.getValue());
     }
 
-    assertFalse("The header has to start with 'Basic '",
-        RSHttpHeaders.getBasicAuth("QWxhZGRpbjpPcGVuU2VzYW1l").isPresent());
-    assertFalse("'Basic' should be case sensitive",
-        RSHttpHeaders.getBasicAuth("basic QWxhZGRpbjpPcGVuU2VzYW1l").isPresent());
+    assertFalse(RSHttpHeaders.getBasicAuth("QWxhZGRpbjpPcGVuU2VzYW1l").isPresent(),
+        "The header has to start with 'Basic '");
+    assertFalse(RSHttpHeaders.getBasicAuth("basic QWxhZGRpbjpPcGVuU2VzYW1l").isPresent(),
+        "'Basic' should be case sensitive");
   }
 
   @Test
@@ -70,10 +70,10 @@ public class RSHttpHeadersTest {
 
   @Test
   public void testBearerAuth() {
-    assertFalse("The header has to start with 'Bearer '",
-        RSHttpHeaders.getBearerAuth("QWxhZGRpbjpPcGVuU2VzYW1l").isPresent());
-    assertFalse("'Bearer' should be case sensitive",
-        RSHttpHeaders.getBearerAuth("bearer abcde").isPresent());
+    assertFalse(RSHttpHeaders.getBearerAuth("QWxhZGRpbjpPcGVuU2VzYW1l").isPresent(),
+        "The header has to start with 'Bearer '");
+    assertFalse(RSHttpHeaders.getBearerAuth("bearer abcde").isPresent(),
+        "'Bearer' should be case sensitive");
     for (int i = 0; i < 1024; i++) {
       assertTrue(RSHttpHeaders.getBearerAuth("Bearer " + RandomStringUtils.random(64)).isPresent());
     }

@@ -1,6 +1,6 @@
 package saasquatch.common.concurrent;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -11,22 +11,22 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class RSFuturesTest {
 
-  private ScheduledExecutorService scheduledExecutor;
+  private static ScheduledExecutorService scheduledExecutor;
 
-  @Before
-  public void before() {
-    this.scheduledExecutor = Executors.newScheduledThreadPool(1);
+  @BeforeAll
+  public static void beforeAll() {
+    scheduledExecutor = Executors.newScheduledThreadPool(1);
   }
 
-  @After
-  public void after() {
-    this.scheduledExecutor.shutdown();
+  @AfterAll
+  public static void afterAll() {
+    scheduledExecutor.shutdown();
   }
 
   @Test
@@ -52,24 +52,20 @@ public class RSFuturesTest {
   private void doTestSequence(
       Function<List<CompletionStage<Integer>>, CompletionStage<List<Integer>>> sequenceFunc)
       throws Exception {
-    try {
-      final List<Integer> intList = ThreadLocalRandom.current().ints(1024, 0, 256)
-          .boxed()
-          .collect(Collectors.toList());
-      final List<CompletionStage<Integer>> promiseList = intList.stream()
-          .map(i -> {
-            final CompletableFuture<Integer> delayed = new CompletableFuture<>();
-            scheduledExecutor.schedule(() -> delayed.complete(i), i, TimeUnit.MILLISECONDS);
-            return delayed;
-          })
-          .collect(Collectors.toList());
-      final List<Integer> sequencedIntList = sequenceFunc.apply(promiseList)
-          .toCompletableFuture()
-          .get(10, TimeUnit.SECONDS);
-      assertEquals("We should get the same list", intList, sequencedIntList);
-    } finally {
-      scheduledExecutor.shutdown();
-    }
+    final List<Integer> intList = ThreadLocalRandom.current().ints(1024, 0, 256)
+        .boxed()
+        .collect(Collectors.toList());
+    final List<CompletionStage<Integer>> promiseList = intList.stream()
+        .map(i -> {
+          final CompletableFuture<Integer> delayed = new CompletableFuture<>();
+          scheduledExecutor.schedule(() -> delayed.complete(i), i, TimeUnit.MILLISECONDS);
+          return delayed;
+        })
+        .collect(Collectors.toList());
+    final List<Integer> sequencedIntList = sequenceFunc.apply(promiseList)
+        .toCompletableFuture()
+        .get(10, TimeUnit.SECONDS);
+    assertEquals(intList, sequencedIntList, "We should get the same list");
   }
 
 }

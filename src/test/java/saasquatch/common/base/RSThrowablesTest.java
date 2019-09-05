@@ -1,9 +1,9 @@
 package saasquatch.common.base;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.google.common.collect.ImmutableList;
 
 public class RSThrowablesTest {
@@ -129,22 +129,22 @@ public class RSThrowablesTest {
       RSThrowables.wrapAndThrow(runtimeException);
       fail();
     } catch (Throwable t) {
-      assertTrue("We should get back the exact same RuntimeException", t == runtimeException);
+      assertTrue(t == runtimeException, "We should get back the exact same RuntimeException");
     }
     final Error error = new AssertionError("foo", new ParseException("foo", 0));
     try {
       RSThrowables.wrapAndThrow(error);
       fail();
     } catch (Throwable t) {
-      assertTrue("We should get back the exact same Error", t == error);
+      assertTrue(t == error, "We should get back the exact same Error");
     }
     final IOException ioException = new IOException("foo", new Error());
     try {
       RSThrowables.wrapAndThrow(ioException);
       fail();
     } catch (Throwable t) {
-      assertTrue("We should get back an UncheckedIOException", t instanceof UncheckedIOException);
-      assertTrue("The cause should be the exact same IOException", t.getCause() == ioException);
+      assertTrue(t instanceof UncheckedIOException, "We should get back an UncheckedIOException");
+      assertTrue(t.getCause() == ioException, "The cause should be the exact same IOException");
     }
     final ParseException parseException = new ParseException("foo", 0);
     try {

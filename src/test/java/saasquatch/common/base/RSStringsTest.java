@@ -1,21 +1,22 @@
 package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RSStringsTest {
 
   private static void _testUtf8TruncationExample(String s, int maxBytes, int expectedBytes) {
     String result = RSStrings.truncateToUtf8ByteSize(s, maxBytes);
     byte[] utf8 = result.getBytes(UTF_8);
-    assertTrue("BAD: our truncation of " + s + " was too big", utf8.length <= maxBytes);
-    assertEquals("BAD: expected " + expectedBytes + " got " + utf8.length, expectedBytes, utf8.length);
-//    System.out.println(s + " truncated to " + result);
+    assertTrue(utf8.length <= maxBytes, "BAD: our truncation of " + s + " was too big");
+    assertEquals(expectedBytes, utf8.length,
+        "BAD: expected " + expectedBytes + " got " + utf8.length);
+    // System.out.println(s + " truncated to " + result);
   }
 
   @Test
@@ -58,8 +59,8 @@ public class RSStringsTest {
       assertTrue(s.getBytes(UTF_8).length > 512);
       String truncated = RSStrings.truncateToUtf8ByteSize(s, 512);
       final int truncatedUtf8Size = truncated.getBytes(UTF_8).length;
-      assertTrue("We should never exceed the limit", truncatedUtf8Size <= 512);
-      assertTrue("We should be at most 4 bytes off", truncatedUtf8Size > 512 - 4);
+      assertTrue(truncatedUtf8Size <= 512, "We should never exceed the limit");
+      assertTrue(truncatedUtf8Size > 512 - 4, "We should be at most 4 bytes off");
     }
   }
 

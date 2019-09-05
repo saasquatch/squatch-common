@@ -1,8 +1,8 @@
 package saasquatch.common.collect;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -26,37 +26,34 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RSCollectorsTest {
 
   @Test
   public void testEmptyList() {
-    final List<Object> collect = Stream.empty()
-        .collect(RSCollectors.toUnmodifiableList());
-    assertTrue("We should be getting the singleton emptyList", collect == Collections.emptyList());
+    final List<Object> collect = Stream.empty().collect(RSCollectors.toUnmodifiableList());
+    assertTrue(collect == Collections.emptyList(), "We should be getting the singleton emptyList");
   }
 
   @Test
   public void testSingletonList() {
-    final List<Object> collect = Stream.of(1)
-        .collect(RSCollectors.toUnmodifiableList());
-    assertEquals("We should be getting a SingletonList", "SingletonList",
-        collect.getClass().getSimpleName());
+    final List<Object> collect = Stream.of(1).collect(RSCollectors.toUnmodifiableList());
+    assertEquals("SingletonList", collect.getClass().getSimpleName(),
+        "We should be getting a SingletonList");
   }
 
   @Test
   public void testEmptySet() {
     {
-      final Set<Object> collect = Stream.empty()
-          .collect(RSCollectors.toUnmodifiableSet());
-      assertTrue("We should be getting the singleton emptySet", collect == Collections.emptySet());
+      final Set<Object> collect = Stream.empty().collect(RSCollectors.toUnmodifiableSet());
+      assertTrue(collect == Collections.emptySet(), "We should be getting the singleton emptySet");
     }
     {
       final Set<Object> collect = Stream.empty()
           .collect(RSCollectors.toUnmodifiableSet(LinkedHashSet::new));
-      assertTrue("We should be getting the singleton emptySet even with a custom Set",
-          collect == Collections.emptySet());
+      assertTrue(collect == Collections.emptySet(),
+          "We should be getting the singleton emptySet even with a custom Set");
     }
   }
 
@@ -65,14 +62,14 @@ public class RSCollectorsTest {
     {
       final Set<Object> collect = Stream.of(1)
           .collect(RSCollectors.toUnmodifiableSet());
-      assertEquals("We should be getting a SingletonSet", "SingletonSet",
-          collect.getClass().getSimpleName());
+      assertEquals("SingletonSet", collect.getClass().getSimpleName(),
+          "We should be getting a SingletonSet");
     }
     {
       final Set<Object> collect = Stream.of(1)
           .collect(RSCollectors.toUnmodifiableSet(LinkedHashSet::new));
-      assertEquals("We should be getting a SingletonSet even with a custom Set", "SingletonSet",
-          collect.getClass().getSimpleName());
+      assertEquals("SingletonSet", collect.getClass().getSimpleName(),
+          "We should be getting a SingletonSet even with a custom Set");
     }
   }
 
@@ -99,16 +96,16 @@ public class RSCollectorsTest {
   public void testEmptySortedSet() {
     final Set<Object> collect = Stream.empty()
         .collect(RSCollectors.toUnmodifiableSortedSet(TreeSet::new));
-    assertTrue("We should be getting the singleton emptySortedSet",
-        collect == Collections.emptySortedSet());
+    assertTrue(collect == Collections.emptySortedSet(),
+        "We should be getting the singleton emptySortedSet");
   }
 
   @Test
   public void testEmptyNavigableSet() {
     final Set<Object> collect = Stream.empty()
         .collect(RSCollectors.toUnmodifiableNavigableSet(TreeSet::new));
-    assertTrue("We should be getting the singleton emptyNavigableSet",
-        collect == Collections.emptyNavigableSet());
+    assertTrue(collect == Collections.emptyNavigableSet(),
+        "We should be getting the singleton emptyNavigableSet");
   }
 
   @Test
@@ -116,14 +113,14 @@ public class RSCollectorsTest {
     {
       final Map<Object, Object> collect = Stream.empty()
           .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity()));
-      assertTrue("We should be getting the singleton emptyMap", collect == Collections.emptyMap());
+      assertTrue(collect == Collections.emptyMap(), "We should be getting the singleton emptyMap");
     }
     {
       final Map<Object, Object> collect = Stream.empty()
           .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity(),
               RSCollectors.throwingMerger(), LinkedHashMap::new));
-      assertTrue("We should be getting the singleton emptyMap even with a custom Map",
-          collect == Collections.emptyMap());
+      assertTrue(collect == Collections.emptyMap(),
+          "We should be getting the singleton emptyMap even with a custom Map");
     }
   }
 
@@ -132,15 +129,15 @@ public class RSCollectorsTest {
     {
       final Map<Object, Object> collect = Stream.of(1)
           .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity()));
-      assertEquals("We should be getting a SingletonMap", "SingletonMap",
-          collect.getClass().getSimpleName());
+      assertEquals("SingletonMap", collect.getClass().getSimpleName(),
+          "We should be getting a SingletonMap");
     }
     {
       final Map<Object, Object> collect = Stream.of(1)
           .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity(),
               RSCollectors.throwingMerger(), LinkedHashMap::new));
-      assertEquals("We should be getting a SingletonMap even with a custom Map", "SingletonMap",
-          collect.getClass().getSimpleName());
+      assertEquals("SingletonMap", collect.getClass().getSimpleName(),
+          "We should be getting a SingletonMap even with a custom Map");
     }
   }
 
@@ -173,8 +170,8 @@ public class RSCollectorsTest {
     final Map<Object, Object> collect = Stream.empty()
         .collect(RSCollectors.toUnmodifiableSortedMap(Function.identity(), Function.identity(),
             RSCollectors.throwingMerger(), TreeMap::new));
-    assertTrue("We should be getting the singleton emptySortedMap",
-        collect == Collections.emptySortedMap());
+    assertTrue(collect == Collections.emptySortedMap(),
+        "We should be getting the singleton emptySortedMap");
   }
 
   @Test
@@ -182,8 +179,8 @@ public class RSCollectorsTest {
     final Map<Object, Object> collect = Stream.empty()
         .collect(RSCollectors.toUnmodifiableNavigableMap(Function.identity(), Function.identity(),
             RSCollectors.throwingMerger(), TreeMap::new));
-    assertTrue("We should be getting the singleton emptyNavigableMap",
-        collect == Collections.emptyNavigableMap());
+    assertTrue(collect == Collections.emptyNavigableMap(),
+        "We should be getting the singleton emptyNavigableMap");
   }
 
   @Test
@@ -228,10 +225,10 @@ public class RSCollectorsTest {
 
   @Test
   public void testEmptyEnumSet() {
-    final Set<TimeUnit> collect = Stream.<TimeUnit>empty()
-        .collect(RSCollectors.toUnmodifiableEnumSet(TimeUnit.class));
-    assertTrue("We should be getting the singleton emptySet",
-        collect == Collections.<TimeUnit>emptySet());
+    final Set<TimeUnit> collect =
+        Stream.<TimeUnit>empty().collect(RSCollectors.toUnmodifiableEnumSet(TimeUnit.class));
+    assertTrue(collect == Collections.<TimeUnit>emptySet(),
+        "We should be getting the singleton emptySet");
   }
 
   @Test
@@ -269,8 +266,8 @@ public class RSCollectorsTest {
     final Map<TimeUnit, Object> collect = Stream.<TimeUnit>empty()
         .collect(RSCollectors.toUnmodifiableEnumMap(Function.identity(), Function.identity(),
             TimeUnit.class));
-    assertTrue("We should be getting the singleton emptyMap",
-        collect == Collections.<TimeUnit, Object>emptyMap());
+    assertTrue(collect == Collections.<TimeUnit, Object>emptyMap(),
+        "We should be getting the singleton emptyMap");
   }
 
   @Test
