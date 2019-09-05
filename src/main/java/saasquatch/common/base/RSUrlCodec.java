@@ -8,10 +8,7 @@ import java.nio.charset.Charset;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.function.IntPredicate;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 import saasquatch.common.annotations.RSBeta;
@@ -223,6 +220,7 @@ public final class RSUrlCodec {
      */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
+      final int bytesLen = bytes.remaining(); // record the length here
       final PrimitiveIterator.OfInt bytesIter = new PrimitiveIterator.OfInt() {
 
         @Override
@@ -241,56 +239,62 @@ public final class RSUrlCodec {
 
       };
       final PrimitiveIterator.OfInt encodedCharIterator = encode(bytesIter);
-      final Spliterator.OfInt encodedCharSpliterator = Spliterators.spliteratorUnknownSize(
-          encodedCharIterator, Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE);
-      final int[] charArray = StreamSupport.intStream(encodedCharSpliterator, false).toArray();
-      return new String(charArray, 0, charArray.length);
+      final CharBuffer buf = CharBuffer.allocate(bytesLen * 3);
+      while (encodedCharIterator.hasNext()) {
+        buf.put((char) encodedCharIterator.nextInt());
+      }
+      buf.flip();
+      return buf.toString();
     }
 
     @RSBeta
     public PrimitiveIterator.OfInt encode(@Nonnull PrimitiveIterator.OfInt byteIterator) {
       return new PrimitiveIterator.OfInt() {
 
-        final CharBuffer buf;
+        /**
+         * Buffer for the final output
+         */
+        private final CharBuffer resultBuffer;
         {
-          buf = CharBuffer.allocate(3);
-          buf.flip(); // make sure it's in read mode by default
+          resultBuffer = CharBuffer.allocate(3);
+          resultBuffer.flip(); // make sure it's in read mode by default
         }
 
         @Override
         public boolean hasNext() {
           tryProcess();
-          return buf.hasRemaining();
+          return resultBuffer.hasRemaining();
         }
 
         @Override
         public int nextInt() {
           tryProcess();
           try {
-            return buf.get();
+            return resultBuffer.get();
           } catch (BufferUnderflowException e) {
             throw new NoSuchElementException(e.getMessage());
           }
         }
 
         private void tryProcess() {
-          if (buf.hasRemaining() || !byteIterator.hasNext()) {
+          if (resultBuffer.hasRemaining() || !byteIterator.hasNext()) {
+            // No need to proceed if the result buffer is not empty or the source is already empty
             return;
           }
-          buf.clear();
+          resultBuffer.clear();
           try {
             final int b = byteIterator.nextInt() & 0xFF;
             if (safeCharPredicate.test(b)) {
-              buf.put((char) b);
+              resultBuffer.put((char) b);
             } else if (spaceToPlus && b == ' ') {
-              buf.put('+');
+              resultBuffer.put('+');
             } else {
-              buf.put('%');
-              buf.put(hexDigit(b >> 4, upperCase));
-              buf.put(hexDigit(b, upperCase));
+              resultBuffer.put('%');
+              resultBuffer.put(hexDigit(b >> 4, upperCase));
+              resultBuffer.put(hexDigit(b, upperCase));
             }
           } finally {
-            buf.flip();
+            resultBuffer.flip();
           }
         }
 
@@ -384,7 +388,10 @@ public final class RSUrlCodec {
     public PrimitiveIterator.OfInt decode(@Nonnull PrimitiveIterator.OfInt charIterator) {
       return new PrimitiveIterator.OfInt() {
 
-        final CharBuffer pushbackBuffer;
+        /**
+         * Buffer for pushing back invalid characters
+         */
+        private final CharBuffer pushbackBuffer;
         {
           if (strict) { // no need for pushback in strict mode
             pushbackBuffer = null;
@@ -394,23 +401,27 @@ public final class RSUrlCodec {
           }
         }
 
-        final ByteBuffer buf;
+
+        /**
+         * Buffer for the final output
+         */
+        private final ByteBuffer resultBuffer;
         {
-          buf = ByteBuffer.allocate(2);
-          buf.flip(); // make sure it's in read mode by default
+          resultBuffer = ByteBuffer.allocate(2);
+          resultBuffer.flip(); // make sure it's in read mode by default
         }
 
         @Override
         public boolean hasNext() {
           tryProcess();
-          return buf.hasRemaining();
+          return resultBuffer.hasRemaining();
         }
 
         @Override
         public int nextInt() {
           tryProcess();
           try {
-            return buf.get();
+            return resultBuffer.get();
           } catch (BufferUnderflowException e) {
             throw new NoSuchElementException(e.getMessage());
           }
@@ -434,7 +445,7 @@ public final class RSUrlCodec {
           try {
             final int u = digit16Strict(_nextChar());
             final int l = digit16Strict(_nextChar());
-            buf.put((byte) ((u << 4) + l));
+            resultBuffer.put((byte) ((u << 4) + l));
           } catch (BufferUnderflowException | NoSuchElementException e) {
             throw new IllegalArgumentException(
                 "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
@@ -446,26 +457,28 @@ public final class RSUrlCodec {
           try {
             uc = _nextChar();
           } catch (BufferUnderflowException | NoSuchElementException e) {
-            buf.put((byte) '%');
+            // We reached the end unexpectedly, so we need to output '%'.
+            resultBuffer.put((byte) '%');
             return;
           }
           try {
             lc = _nextChar();
           } catch (BufferUnderflowException | NoSuchElementException e) {
-            buf.put((byte) '%').put((byte) uc);
+            // We reached the end unexpectedly, so we need to output '%' and the first char read.
+            resultBuffer.put((byte) '%').put((byte) uc);
             return;
           }
           final int u = digit16(uc);
           final int l = digit16(lc);
           if (u != -1 && l != -1) {
             // Both digits are valid.
-            buf.put((byte) ((u << 4) + l));
+            resultBuffer.put((byte) ((u << 4) + l));
           } else {
             /*
              * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
              * 2 characters can potentially start a new encoding sequence.
              */
-            buf.put((byte) '%');
+            resultBuffer.put((byte) '%');
             pushbackBuffer.clear();
             try {
               pushbackBuffer.put(uc).put(lc);
@@ -476,10 +489,11 @@ public final class RSUrlCodec {
         }
 
         private void tryProcess() {
-          if (buf.hasRemaining() || !_hasNextChar()) {
+          if (resultBuffer.hasRemaining() || !_hasNextChar()) {
+            // No need to proceed if the result buffer is not empty or the source is already empty
             return;
           }
-          buf.clear();
+          resultBuffer.clear();
           try {
             final char c = _nextChar();
             if (c == '%') {
@@ -489,12 +503,12 @@ public final class RSUrlCodec {
                 handleSeqLenient();
               }
             } else if (plusToSpace && c == '+') {
-              buf.put((byte) ' ');
+              resultBuffer.put((byte) ' ');
             } else {
-              buf.put((byte) c);
+              resultBuffer.put((byte) c);
             }
           } finally {
-            buf.flip();
+            resultBuffer.flip();
           }
         }
 
