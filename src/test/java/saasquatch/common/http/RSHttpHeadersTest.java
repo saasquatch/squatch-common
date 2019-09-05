@@ -3,8 +3,8 @@ package saasquatch.common.http;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -47,12 +47,8 @@ public class RSHttpHeadersTest {
   @Test
   public void testInvalidBase64() {
     final String invalidB64 = "!@#$";
-    try {
-      Base64.getDecoder().decode(invalidB64);
-      fail(invalidB64 + " should be invalid");
-    } catch (IllegalArgumentException expected) {
-      // ignore
-    }
+    assertThrows(IllegalArgumentException.class, () -> Base64.getDecoder().decode(invalidB64),
+        invalidB64 + " should be invalid");
     assertFalse(RSHttpHeaders.getBasicAuth("Basic " + invalidB64).isPresent());
   }
 

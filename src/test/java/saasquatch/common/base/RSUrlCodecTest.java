@@ -5,7 +5,7 @@ import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -169,30 +169,15 @@ public class RSUrlCodecTest {
 
   @Test
   public void testInvalid() {
-    try {
-      RSUrlCodec.decode("%%44");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class, () -> RSUrlCodec.decode("%%44"));
     assertEquals("%D", RSUrlCodec.getLenientDecoder().decode("%%44"));
-    try {
-      RSUrlCodec.decode("%4%44");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class, () -> RSUrlCodec.decode("%4%44"));
     assertEquals("%4D", RSUrlCodec.getLenientDecoder().decode("%4%44"));
-    try {
-      RSUrlCodec.decode("%4.%44");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class, () -> RSUrlCodec.decode("%4.%44"));
     assertEquals("%4.D", RSUrlCodec.getLenientDecoder().decode("%4.%44"));
-    try {
-      RSUrlCodec.decode("%44%4");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class, () -> RSUrlCodec.decode("%44%4"));
     assertEquals("D%4", RSUrlCodec.getLenientDecoder().decode("%44%4"));
-    try {
-      RSUrlCodec.decode("%44%");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class, () -> RSUrlCodec.decode("%44%"));
     assertEquals("D%", RSUrlCodec.getLenientDecoder().decode("%44%"));
   }
 
@@ -204,10 +189,8 @@ public class RSUrlCodecTest {
 
   @Test
   public void testDecoderConfig() {
-    try {
-      RSUrlCodec.getLenientDecoder().strict().decode("%%44");
-      fail();
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class,
+        () -> RSUrlCodec.getLenientDecoder().strict().decode("%%44"));
   }
 
 }

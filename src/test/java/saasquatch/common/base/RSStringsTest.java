@@ -3,8 +3,8 @@ package saasquatch.common.base;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
@@ -68,11 +68,8 @@ public class RSStringsTest {
   public void testUtf8TruncationBadInput() {
     // This should not error
     assertNull(RSStrings.truncateToUtf8ByteSize(null, 123));
-    try {
-      RSStrings.truncateToUtf8ByteSize(null, -1);
-      fail("negative input should error");
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> RSStrings.truncateToUtf8ByteSize(null, -1),
+        "negative input should error");
   }
 
 }

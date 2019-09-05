@@ -1,8 +1,8 @@
 package saasquatch.common.collect;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -191,10 +191,8 @@ public class RSCollectorsTest {
     final List<String> collect = original.stream()
         .collect(RSCollectors.toUnmodifiableList());
     assertEquals(original, collect);
-    try {
-      collect.clear();
-      fail("The result should be unmodifiable");
-    } catch (UnsupportedOperationException expected) {}
+    assertThrows(UnsupportedOperationException.class, collect::clear,
+        "The result should be unmodifiable");
   }
 
   @Test
@@ -208,10 +206,8 @@ public class RSCollectorsTest {
         .collect(RSCollectors.toUnmodifiableSet(TreeSet::new));
     for (Set<String> collect : Arrays.asList(collect1, collect2)) {
       assertEquals(original, collect);
-      try {
-        collect.clear();
-        fail("The result should be unmodifiable");
-      } catch (UnsupportedOperationException expected) {}
+      assertThrows(UnsupportedOperationException.class, collect::clear,
+          "The result should be unmodifiable");
     }
   }
 
@@ -243,10 +239,8 @@ public class RSCollectorsTest {
             RSCollectors.throwingMerger(), TreeMap::new));
     for (Map<String, String> collect : Arrays.asList(collect1, collect2)) {
       assertEquals(original, collect);
-      try {
-        collect.clear();
-        fail("The result should be unmodifiable");
-      } catch (UnsupportedOperationException expected) {}
+      assertThrows(UnsupportedOperationException.class, collect::clear,
+          "The result should be unmodifiable");
     }
   }
 
@@ -272,12 +266,11 @@ public class RSCollectorsTest {
 
   @Test
   public void testThrowingMerger() {
-    try {
-      Stream.of(1, 1)
-          .collect(RSCollectors.toUnmodifiableMap(Function.identity(), Function.identity(),
-              RSCollectors.throwingMerger(), ConcurrentHashMap::new));
-      fail("We should be getting a merger exception");
-    } catch (IllegalStateException expected) {}
+    assertThrows(IllegalStateException.class, () -> {
+      Stream.of(1, 1).collect(RSCollectors.toUnmodifiableMap(
+          Function.identity(), Function.identity(), RSCollectors.throwingMerger(),
+          ConcurrentHashMap::new));
+    }, "We should be getting a merger exception");
   }
 
 }

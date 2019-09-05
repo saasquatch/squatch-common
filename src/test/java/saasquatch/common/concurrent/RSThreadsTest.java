@@ -2,8 +2,8 @@ package saasquatch.common.concurrent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 
 public class RSThreadsTest {
@@ -26,10 +26,8 @@ public class RSThreadsTest {
 
   @Test
   public void testClearThreadLocalsNull() {
-    try {
-      RSThreads.clearThreadLocals(null);
-      fail("NPE expected");
-    } catch (NullPointerException expected) {}
+    assertThrows(NullPointerException.class, () -> RSThreads.clearThreadLocals(null),
+        "NPE expected");
   }
 
   @Test

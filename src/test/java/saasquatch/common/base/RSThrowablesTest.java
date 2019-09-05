@@ -2,6 +2,7 @@ package saasquatch.common.base;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
@@ -46,18 +47,14 @@ public class RSThrowablesTest {
   @Test
   public void testListImmutablility() {
     final List<Throwable> causeChain = RSThrowables.getCauseChainList(new AssertionError());
-    try {
-      causeChain.clear();
-      fail("The List should be immutable");
-    } catch (UnsupportedOperationException expected) {}
+    assertThrows(UnsupportedOperationException.class, causeChain::clear,
+        "The List should be immutable");
   }
 
   @Test
   public void testNegativeLimit() {
-    try {
-      RSThrowables.getCauseChainList(new Exception(), -1);
-      fail("negative limit should error");
-    } catch (IllegalArgumentException expected) {}
+    assertThrows(IllegalArgumentException.class,
+        () -> RSThrowables.getCauseChainList(new Exception(), -1), "negative limit should error");
   }
 
   @Test
@@ -78,10 +75,7 @@ public class RSThrowablesTest {
 
   @Test
   public void testCauseChainWithNull() {
-    try {
-      RSThrowables.getCauseChain(null);
-      fail();
-    } catch (NullPointerException expected) {}
+    assertThrows(NullPointerException.class, () -> RSThrowables.getCauseChain(null));
   }
 
   @Test
