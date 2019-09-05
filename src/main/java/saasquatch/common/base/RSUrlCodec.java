@@ -372,10 +372,57 @@ public final class RSUrlCodec {
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      final PrimitiveIterator.OfInt decodedBytes = decode(s.chars().iterator());
+      return strict ? decodeStrict(s) : decodeLenient(s);
+    }
+
+    private String decodeStrict(@Nonnull CharSequence s) {
+      final CharBuffer chars = CharBuffer.wrap(s);
       final ByteBuffer buf = ByteBuffer.allocate(s.length());
-      while (decodedBytes.hasNext()) {
-        buf.put((byte) decodedBytes.nextInt());
+      while (chars.hasRemaining()) {
+        final char c = chars.get();
+        if (c == '%') {
+          try {
+            final int u = digit16Strict(chars.get());
+            final int l = digit16Strict(chars.get());
+            buf.put((byte) ((u << 4) + l));
+          } catch (BufferUnderflowException e) {
+            throw new IllegalArgumentException(
+                "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
+          }
+        } else if (plusToSpace && c == '+') {
+          buf.put((byte) ' ');
+        } else {
+          buf.put((byte) c);
+        }
+      }
+      buf.flip();
+      return charset.decode(buf).toString();
+    }
+
+    private String decodeLenient(@Nonnull CharSequence s) {
+      // Not using CharBuffer since we'll need to rewind
+      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      for (int i = 0; i < s.length();) {
+        final char c = s.charAt(i++);
+        if (c == '%' && s.length() - i >= 2) {
+          final int u = digit16(s.charAt(i++));
+          final int l = digit16(s.charAt(i++));
+          if (u != -1 && l != -1) {
+            // Both digits are valid.
+            buf.put((byte) ((u << 4) + l));
+          } else {
+            /*
+             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
+             * 2 characters can potentially start a new encoding sequence.
+             */
+            buf.put((byte) '%');
+            i -= 2;
+          }
+        } else if (plusToSpace && c == '+') {
+          buf.put((byte) ' ');
+        } else {
+          buf.put((byte) c);
+        }
       }
       buf.flip();
       return charset.decode(buf).toString();
