@@ -277,7 +277,7 @@ public final class RSUrlCodec {
           if (buf.hasRemaining() || !byteIterator.hasNext()) {
             return;
           }
-          buf.flip().clear();
+          buf.clear();
           try {
             final int b = byteIterator.nextInt() & 0xFF;
             if (safeCharPredicate.test(b)) {
@@ -371,9 +371,16 @@ public final class RSUrlCodec {
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      return strict ? decodeStrict(s) : decodeLenient(s);
+      final PrimitiveIterator.OfInt decodedBytes = decode(s.chars().iterator());
+      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      while (decodedBytes.hasNext()) {
+        buf.put((byte) decodedBytes.nextInt());
+      }
+      buf.flip();
+      return charset.decode(buf).toString();
     }
 
+    @RSBeta
     public PrimitiveIterator.OfInt decode(@Nonnull PrimitiveIterator.OfInt charIterator) {
       return new PrimitiveIterator.OfInt() {
 
@@ -423,44 +430,63 @@ public final class RSUrlCodec {
           return (char) charIterator.nextInt();
         }
 
+        private void handleSeqStrict() {
+          try {
+            final int u = digit16Strict(_nextChar());
+            final int l = digit16Strict(_nextChar());
+            buf.put((byte) ((u << 4) + l));
+          } catch (BufferUnderflowException | NoSuchElementException e) {
+            throw new IllegalArgumentException(
+                "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
+          }
+        }
+
+        private void handleSeqLenient() {
+          final char uc, lc;
+          try {
+            uc = _nextChar();
+          } catch (BufferUnderflowException | NoSuchElementException e) {
+            buf.put((byte) '%');
+            return;
+          }
+          try {
+            lc = _nextChar();
+          } catch (BufferUnderflowException | NoSuchElementException e) {
+            buf.put((byte) '%').put((byte) uc);
+            return;
+          }
+          final int u = digit16(uc);
+          final int l = digit16(lc);
+          if (u != -1 && l != -1) {
+            // Both digits are valid.
+            buf.put((byte) ((u << 4) + l));
+          } else {
+            /*
+             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
+             * 2 characters can potentially start a new encoding sequence.
+             */
+            buf.put((byte) '%');
+            pushbackBuffer.clear();
+            try {
+              pushbackBuffer.put(uc).put(lc);
+            } finally {
+              pushbackBuffer.flip();
+            }
+          }
+        }
+
         private void tryProcess() {
           if (buf.hasRemaining() || !_hasNextChar()) {
             return;
           }
-          buf.flip().clear();
+          buf.clear();
           try {
             final char c = _nextChar();
             if (c == '%') {
-              final char uc, lc;
-              try {
-                uc = _nextChar();
-              } catch (BufferUnderflowException | NoSuchElementException e) {
-                buf.put((byte) '%');
-                return;
-              }
-              try {
-                lc = _nextChar();
-              } catch (BufferUnderflowException | NoSuchElementException e) {
-                buf.put((byte) '%').put((byte) uc);
-                return;
-              }
-              final int u = digit16(uc);
-              final int l = digit16(lc);
-              if (u != -1 && l != -1) {
-                // Both digits are valid.
-                buf.put((byte) ((u << 4) + l));
+              if (strict) {
+                handleSeqStrict();
               } else {
-                /*
-                 * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
-                 * 2 characters can potentially start a new encoding sequence.
-                 */
-                buf.put((byte) '%');
-                pushbackBuffer.flip().clear();
-                try {
-                  pushbackBuffer.put(uc).put(lc);
-                } finally {
-                  pushbackBuffer.flip();
-                }
+                handleSeqLenient();
               }
             } else if (plusToSpace && c == '+') {
               buf.put((byte) ' ');
@@ -473,65 +499,6 @@ public final class RSUrlCodec {
         }
 
       };
-    }
-
-    private String decodeStrict(@Nonnull CharSequence s) {
-      final CharBuffer chars = CharBuffer.wrap(s);
-      final ByteBuffer buf = ByteBuffer.allocate(s.length());
-      while (chars.hasRemaining()) {
-        final char c = chars.get();
-        if (c == '%') {
-          try {
-            final int u = digit16Strict(chars.get());
-            final int l = digit16Strict(chars.get());
-            buf.put((byte) ((u << 4) + l));
-          } catch (BufferUnderflowException e) {
-            throw new IllegalArgumentException(
-                "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
-          }
-        } else if (plusToSpace && c == '+') {
-          buf.put((byte) ' ');
-        } else {
-          buf.put((byte) c);
-        }
-      }
-      buf.flip();
-      return charset.decode(buf).toString();
-    }
-
-    private String decodeLenient(@Nonnull CharSequence s) {
-      int[] intArr = StreamSupport.intStream(Spliterators.spliteratorUnknownSize(decode(s.chars().iterator()), 0), false).toArray();
-      final byte[] byteArr = new byte[intArr.length];
-      for (int i = 0; i < byteArr.length; i++) {
-        byteArr[i] = (byte) intArr[i];
-      }
-      return new String(byteArr, charset);
-      // Not using CharBuffer since we'll need to rewind
-//      final ByteBuffer buf = ByteBuffer.allocate(s.length());
-//      for (int i = 0; i < s.length();) {
-//        final char c = s.charAt(i++);
-//        if (c == '%' && s.length() - i >= 2) {
-//          final int u = digit16(s.charAt(i++));
-//          final int l = digit16(s.charAt(i++));
-//          if (u != -1 && l != -1) {
-//            // Both digits are valid.
-//            buf.put((byte) ((u << 4) + l));
-//          } else {
-//            /*
-//             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
-//             * 2 characters can potentially start a new encoding sequence.
-//             */
-//            buf.put((byte) '%');
-//            i -= 2;
-//          }
-//        } else if (plusToSpace && c == '+') {
-//          buf.put((byte) ' ');
-//        } else {
-//          buf.put((byte) c);
-//        }
-//      }
-//      buf.flip();
-//      return charset.decode(buf).toString();
     }
 
   }
