@@ -5,10 +5,16 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.IntPredicate;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+import saasquatch.common.annotations.RSBeta;
 
 /**
  * Util for URL encoding/decoding. Methods in this class are more standards-compliant and more
@@ -217,21 +223,76 @@ public final class RSUrlCodec {
      */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
-      final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
-      while (bytes.hasRemaining()) {
-        final int b = bytes.get() & 0xFF;
-        if (safeCharPredicate.test(b)) {
-          buf.put((char) b);
-        } else if (spaceToPlus && b == ' ') {
-          buf.put('+');
-        } else {
-          buf.put('%');
-          buf.put(hexDigit(b >> 4, upperCase));
-          buf.put(hexDigit(b, upperCase));
+      final PrimitiveIterator.OfInt bytesIter = new PrimitiveIterator.OfInt() {
+
+        @Override
+        public boolean hasNext() {
+          return bytes.hasRemaining();
         }
-      }
-      buf.flip();
-      return buf.toString();
+
+        @Override
+        public int nextInt() {
+          try {
+            return bytes.get();
+          } catch (BufferUnderflowException e) {
+            throw new NoSuchElementException(e.getMessage());
+          }
+        }
+
+      };
+      final PrimitiveIterator.OfInt encodedCharIter = encode(bytesIter);
+      final Spliterator.OfInt encodedCharSpliterator =
+          Spliterators.spliteratorUnknownSize(encodedCharIter, 0);
+      final int[] arr = StreamSupport.intStream(encodedCharSpliterator, false).toArray();
+      return new String(arr, 0, arr.length);
+    }
+
+    @RSBeta
+    public PrimitiveIterator.OfInt encode(@Nonnull PrimitiveIterator.OfInt byteIter) {
+      return new PrimitiveIterator.OfInt() {
+
+        final CharBuffer buf;
+        {
+          buf = CharBuffer.allocate(3);
+          buf.flip(); // make sure buf is in read mode by default
+        }
+
+        @Override
+        public boolean hasNext() {
+          tryProcess();
+          return buf.hasRemaining();
+        }
+
+        @Override
+        public int nextInt() {
+          tryProcess();
+          try {
+            return buf.get();
+          } catch (BufferUnderflowException e) {
+            throw new NoSuchElementException(e.getMessage());
+          }
+        }
+
+        private void tryProcess() {
+          if (buf.hasRemaining() || !byteIter.hasNext()) {
+            return;
+          }
+          buf.flip();
+          buf.clear();
+          final int b = byteIter.nextInt() & 0xFF;
+          if (safeCharPredicate.test(b)) {
+            buf.put((char) b);
+          } else if (spaceToPlus && b == ' ') {
+            buf.put('+');
+          } else {
+            buf.put('%');
+            buf.put(hexDigit(b >> 4, upperCase));
+            buf.put(hexDigit(b, upperCase));
+          }
+          buf.flip();
+        }
+
+      };
     }
 
   }
