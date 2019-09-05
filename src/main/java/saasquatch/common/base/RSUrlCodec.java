@@ -262,24 +262,30 @@ public final class RSUrlCodec {
 
         @Override
         public boolean hasNext() {
-          tryProcess();
-          return resultBuffer.hasRemaining();
+          return tryProcessNext();
         }
 
         @Override
         public int nextInt() {
-          tryProcess();
-          try {
-            return resultBuffer.get();
-          } catch (BufferUnderflowException e) {
-            throw new NoSuchElementException(e.getMessage());
+          if (!tryProcessNext()) {
+            throw new NoSuchElementException();
           }
+          return resultBuffer.get();
         }
 
-        private void tryProcess() {
-          if (resultBuffer.hasRemaining() || !byteIterator.hasNext()) {
-            // No need to proceed if the result buffer is not empty or the source is already empty
-            return;
+        /**
+         * Attempt to process the next byte from the input if the result buffer is empty
+         *
+         * @return hasNext
+         */
+        private boolean tryProcessNext() {
+          if (resultBuffer.hasRemaining()) {
+            // The result buffer hasn't been drained yet
+            return true;
+          }
+          if (!byteIterator.hasNext()) {
+            // The source is drained already
+            return false;
           }
           resultBuffer.clear();
           try {
@@ -296,6 +302,7 @@ public final class RSUrlCodec {
           } finally {
             resultBuffer.flip();
           }
+          return true;
         }
 
       };
@@ -413,18 +420,15 @@ public final class RSUrlCodec {
 
         @Override
         public boolean hasNext() {
-          tryProcess();
-          return resultBuffer.hasRemaining();
+          return tryProcessNext();
         }
 
         @Override
         public int nextInt() {
-          tryProcess();
-          try {
-            return resultBuffer.get();
-          } catch (BufferUnderflowException e) {
-            throw new NoSuchElementException(e.getMessage());
+          if (!tryProcessNext()) {
+            throw new NoSuchElementException();
           }
+          return resultBuffer.get();
         }
 
         private boolean _hasNextChar() {
@@ -488,10 +492,19 @@ public final class RSUrlCodec {
           }
         }
 
-        private void tryProcess() {
-          if (resultBuffer.hasRemaining() || !_hasNextChar()) {
-            // No need to proceed if the result buffer is not empty or the source is already empty
-            return;
+        /**
+         * Attempt to process the next char from the input if the result buffer is empty
+         *
+         * @return hasNext
+         */
+        private boolean tryProcessNext() {
+          if (resultBuffer.hasRemaining()) {
+            // The result buffer hasn't been drained yet
+            return true;
+          }
+          if (!_hasNextChar()) {
+            // The source is drained already
+            return false;
           }
           resultBuffer.clear();
           try {
@@ -510,6 +523,7 @@ public final class RSUrlCodec {
           } finally {
             resultBuffer.flip();
           }
+          return true;
         }
 
       };
