@@ -254,7 +254,7 @@ public final class RSUrlCodec {
         final CharBuffer buf;
         {
           buf = CharBuffer.allocate(3);
-          buf.flip(); // make sure buf is in read mode by default
+          buf.flip(); // make sure it's in read mode by default
         }
 
         @Override
@@ -277,19 +277,21 @@ public final class RSUrlCodec {
           if (buf.hasRemaining() || !byteIterator.hasNext()) {
             return;
           }
-          buf.flip();
-          buf.clear();
-          final int b = byteIterator.nextInt() & 0xFF;
-          if (safeCharPredicate.test(b)) {
-            buf.put((char) b);
-          } else if (spaceToPlus && b == ' ') {
-            buf.put('+');
-          } else {
-            buf.put('%');
-            buf.put(hexDigit(b >> 4, upperCase));
-            buf.put(hexDigit(b, upperCase));
+          buf.flip().clear();
+          try {
+            final int b = byteIterator.nextInt() & 0xFF;
+            if (safeCharPredicate.test(b)) {
+              buf.put((char) b);
+            } else if (spaceToPlus && b == ' ') {
+              buf.put('+');
+            } else {
+              buf.put('%');
+              buf.put(hexDigit(b >> 4, upperCase));
+              buf.put(hexDigit(b, upperCase));
+            }
+          } finally {
+            buf.flip();
           }
-          buf.flip();
         }
 
       };
@@ -372,6 +374,107 @@ public final class RSUrlCodec {
       return strict ? decodeStrict(s) : decodeLenient(s);
     }
 
+    public PrimitiveIterator.OfInt decode(@Nonnull PrimitiveIterator.OfInt charIterator) {
+      return new PrimitiveIterator.OfInt() {
+
+        final CharBuffer pushbackBuffer;
+        {
+          if (strict) { // no need for pushback in strict mode
+            pushbackBuffer = null;
+          } else {
+            pushbackBuffer = CharBuffer.allocate(2);
+            pushbackBuffer.flip(); // make sure it's in read mode by default
+          }
+        }
+
+        final ByteBuffer buf;
+        {
+          buf = ByteBuffer.allocate(2);
+          buf.flip(); // make sure it's in read mode by default
+        }
+
+        @Override
+        public boolean hasNext() {
+          tryProcess();
+          return buf.hasRemaining();
+        }
+
+        @Override
+        public int nextInt() {
+          tryProcess();
+          try {
+            return buf.get();
+          } catch (BufferUnderflowException e) {
+            throw new NoSuchElementException(e.getMessage());
+          }
+        }
+
+        private boolean _hasNextChar() {
+          if (pushbackBuffer != null && pushbackBuffer.hasRemaining()) {
+            return true;
+          }
+          return charIterator.hasNext();
+        }
+
+        private char _nextChar() {
+          if (pushbackBuffer != null && pushbackBuffer.hasRemaining()) {
+            return pushbackBuffer.get();
+          }
+          return (char) charIterator.nextInt();
+        }
+
+        private void tryProcess() {
+          if (buf.hasRemaining() || !_hasNextChar()) {
+            return;
+          }
+          buf.flip().clear();
+          try {
+            final char c = _nextChar();
+            if (c == '%') {
+              final char uc, lc;
+              try {
+                uc = _nextChar();
+              } catch (BufferUnderflowException | NoSuchElementException e) {
+                buf.put((byte) '%');
+                return;
+              }
+              try {
+                lc = _nextChar();
+              } catch (BufferUnderflowException | NoSuchElementException e) {
+                buf.put((byte) '%').put((byte) uc);
+                return;
+              }
+              final int u = digit16(uc);
+              final int l = digit16(lc);
+              if (u != -1 && l != -1) {
+                // Both digits are valid.
+                buf.put((byte) ((u << 4) + l));
+              } else {
+                /*
+                 * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
+                 * 2 characters can potentially start a new encoding sequence.
+                 */
+                buf.put((byte) '%');
+                pushbackBuffer.flip().clear();
+                try {
+                  pushbackBuffer.put(uc).put(lc);
+                } finally {
+                  pushbackBuffer.flip();
+                }
+              }
+            } else if (plusToSpace && c == '+') {
+              buf.put((byte) ' ');
+            } else {
+              buf.put((byte) c);
+            }
+          } finally {
+            buf.flip();
+          }
+        }
+
+      };
+    }
+
     private String decodeStrict(@Nonnull CharSequence s) {
       final CharBuffer chars = CharBuffer.wrap(s);
       final ByteBuffer buf = ByteBuffer.allocate(s.length());
@@ -397,32 +500,38 @@ public final class RSUrlCodec {
     }
 
     private String decodeLenient(@Nonnull CharSequence s) {
-      // Not using CharBuffer since we'll need to rewind
-      final ByteBuffer buf = ByteBuffer.allocate(s.length());
-      for (int i = 0; i < s.length();) {
-        final char c = s.charAt(i++);
-        if (c == '%' && s.length() - i >= 2) {
-          final int u = digit16(s.charAt(i++));
-          final int l = digit16(s.charAt(i++));
-          if (u != -1 && l != -1) {
-            // Both digits are valid.
-            buf.put((byte) ((u << 4) + l));
-          } else {
-            /*
-             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
-             * 2 characters can potentially start a new encoding sequence.
-             */
-            buf.put((byte) '%');
-            i -= 2;
-          }
-        } else if (plusToSpace && c == '+') {
-          buf.put((byte) ' ');
-        } else {
-          buf.put((byte) c);
-        }
+      int[] intArr = StreamSupport.intStream(Spliterators.spliteratorUnknownSize(decode(s.chars().iterator()), 0), false).toArray();
+      final byte[] byteArr = new byte[intArr.length];
+      for (int i = 0; i < byteArr.length; i++) {
+        byteArr[i] = (byte) intArr[i];
       }
-      buf.flip();
-      return charset.decode(buf).toString();
+      return new String(byteArr, charset);
+      // Not using CharBuffer since we'll need to rewind
+//      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+//      for (int i = 0; i < s.length();) {
+//        final char c = s.charAt(i++);
+//        if (c == '%' && s.length() - i >= 2) {
+//          final int u = digit16(s.charAt(i++));
+//          final int l = digit16(s.charAt(i++));
+//          if (u != -1 && l != -1) {
+//            // Both digits are valid.
+//            buf.put((byte) ((u << 4) + l));
+//          } else {
+//            /*
+//             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
+//             * 2 characters can potentially start a new encoding sequence.
+//             */
+//            buf.put((byte) '%');
+//            i -= 2;
+//          }
+//        } else if (plusToSpace && c == '+') {
+//          buf.put((byte) ' ');
+//        } else {
+//          buf.put((byte) c);
+//        }
+//      }
+//      buf.flip();
+//      return charset.decode(buf).toString();
     }
 
   }
