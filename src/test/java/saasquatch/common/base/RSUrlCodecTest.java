@@ -187,10 +187,12 @@ public class RSUrlCodecTest {
   public void testEncoderConfig() {
     assertEquals("%0A%00", RSUrlCodec.getEncoder().withCharset(UTF_16LE).upperCase().encode("\n"));
     assertEquals("%00%0a", RSUrlCodec.getEncoder().withCharset(UTF_16BE).lowerCase().encode("\n"));
+    assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().withCharset(UTF_8));
     assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().upperCase());
     assertNotSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().lowerCase());
     assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().encodeSpaceToPlus(false));
     assertNotSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().encodeSpaceToPlus(true));
+    assertSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().withCharset(UTF_8));
     assertSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().upperCase());
     assertNotSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().lowerCase());
     assertSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().encodeSpaceToPlus(true));
@@ -200,12 +202,16 @@ public class RSUrlCodecTest {
 
   @Test
   public void testDecoderConfig() {
+    assertEquals("\n", RSUrlCodec.getDecoder().withCharset(UTF_16LE).decode("%0A%00"));
+    assertEquals("\n", RSUrlCodec.getDecoder().withCharset(UTF_16BE).decode("%00%0a"));
     assertThrows(IllegalArgumentException.class,
         () -> RSUrlCodec.getLenientDecoder().strict().decode("%%44"));
+    assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().withCharset(UTF_8));
     assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().strict());
     assertNotSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().lenient());
     assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().decodePlusToSpace(true));
     assertNotSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().decodePlusToSpace(false));
+    assertSame(RSUrlCodec.getLenientDecoder(), RSUrlCodec.getLenientDecoder().withCharset(UTF_8));
     assertSame(RSUrlCodec.getLenientDecoder(), RSUrlCodec.getLenientDecoder().lenient());
     assertNotSame(RSUrlCodec.getLenientDecoder(), RSUrlCodec.getLenientDecoder().strict());
     assertSame(RSUrlCodec.getLenientDecoder(),
