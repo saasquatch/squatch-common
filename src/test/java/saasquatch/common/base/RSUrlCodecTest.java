@@ -3,8 +3,10 @@ package saasquatch.common.base;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -185,12 +187,31 @@ public class RSUrlCodecTest {
   public void testEncoderConfig() {
     assertEquals("%0A%00", RSUrlCodec.getEncoder().withCharset(UTF_16LE).upperCase().encode("\n"));
     assertEquals("%00%0a", RSUrlCodec.getEncoder().withCharset(UTF_16BE).lowerCase().encode("\n"));
+    assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().upperCase());
+    assertNotSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().lowerCase());
+    assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().encodeSpaceToPlus(false));
+    assertNotSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().encodeSpaceToPlus(true));
+    assertSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().upperCase());
+    assertNotSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().lowerCase());
+    assertSame(RSUrlCodec.getFormEncoder(), RSUrlCodec.getFormEncoder().encodeSpaceToPlus(true));
+    assertNotSame(RSUrlCodec.getFormEncoder(),
+        RSUrlCodec.getFormEncoder().encodeSpaceToPlus(false));
   }
 
   @Test
   public void testDecoderConfig() {
     assertThrows(IllegalArgumentException.class,
         () -> RSUrlCodec.getLenientDecoder().strict().decode("%%44"));
+    assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().strict());
+    assertNotSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().lenient());
+    assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().decodePlusToSpace(true));
+    assertNotSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().decodePlusToSpace(false));
+    assertSame(RSUrlCodec.getLenientDecoder(), RSUrlCodec.getLenientDecoder().lenient());
+    assertNotSame(RSUrlCodec.getLenientDecoder(), RSUrlCodec.getLenientDecoder().strict());
+    assertSame(RSUrlCodec.getLenientDecoder(),
+        RSUrlCodec.getLenientDecoder().decodePlusToSpace(true));
+    assertNotSame(RSUrlCodec.getLenientDecoder(),
+        RSUrlCodec.getLenientDecoder().decodePlusToSpace(false));
   }
 
 }

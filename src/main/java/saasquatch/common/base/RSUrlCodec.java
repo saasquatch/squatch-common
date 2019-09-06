@@ -64,35 +64,6 @@ public final class RSUrlCodec {
   }
 
   /**
-   * @deprecated use {@link #encode(CharSequence)}
-   */
-  @Deprecated
-  public static String encodeStandard(@Nonnull CharSequence s) {
-    return Encoder.RFC3986.encode(s);
-  }
-
-  /**
-   * URL encode with the {@code application/x-www-form-urlencoded} type. This is what Java built-in
-   * URLEncoder does by default.
-   *
-   * @deprecated use {@link #getFormEncoder()}
-   */
-  @Deprecated
-  public static String encodeForm(@Nonnull CharSequence s) {
-    return Encoder.FORM.encode(s);
-  }
-
-  /**
-   * @deprecated use {@link #getEncoder()}
-   */
-  @Deprecated
-  public static String encode(@Nonnull CharSequence s, @Nonnull IntPredicate isSafeChar,
-      boolean spaceToPlus) {
-    return Encoder.RFC3986.withSafeCharPredicate(isSafeChar).encodeSpaceToPlus(spaceToPlus)
-        .encode(s);
-  }
-
-  /**
    * URL decode in strict mode
    *
    * @throws IllegalArgumentException if the input contains invalid URL encodings
@@ -101,30 +72,6 @@ public final class RSUrlCodec {
    */
   public static String decode(@Nonnull CharSequence s) {
     return Decoder.STRICT.decode(s);
-  }
-
-  /**
-   * @deprecated use {@link #getDecoder()}
-   */
-  @Deprecated
-  public static String decode(@Nonnull CharSequence s, boolean plusToSpace) {
-    return Decoder.STRICT.decodePlusToSpace(plusToSpace).decode(s);
-  }
-
-  /**
-   * @deprecated use {@link #getLenientDecoder()}
-   */
-  @Deprecated
-  public static String decodeLenient(@Nonnull CharSequence s) {
-    return Decoder.LENIENT.decode(s);
-  }
-
-  /**
-   * @deprecated use {@link #getDecoder()}
-   */
-  @Deprecated
-  public static String decodeLenient(@Nonnull CharSequence s, boolean plusToSpace) {
-    return Decoder.LENIENT.decodePlusToSpace(plusToSpace).decode(s);
   }
 
   /**
