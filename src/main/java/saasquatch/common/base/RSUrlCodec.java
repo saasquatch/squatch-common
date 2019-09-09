@@ -284,10 +284,11 @@ public final class RSUrlCodec {
 
     private String decodeLenient(@Nonnull CharSequence s) {
       // Not using CharBuffer since we'll need to rewind
-      final ByteBuffer buf = ByteBuffer.allocate(s.length());
-      for (int i = 0; i < s.length();) {
+      final int len = s.length();
+      final ByteBuffer buf = ByteBuffer.allocate(len);
+      for (int i = 0; i < len;) {
         final char c = s.charAt(i++);
-        if (c == '%' && s.length() - i >= 2) {
+        if (c == '%' && len - i >= 2) {
           final int u = digit16(s.charAt(i++));
           final int l = digit16(s.charAt(i++));
           if (u != -1 && l != -1) {
