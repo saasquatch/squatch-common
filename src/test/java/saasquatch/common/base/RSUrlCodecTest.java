@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.CharBuffer;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntPredicate;
@@ -22,7 +23,7 @@ public class RSUrlCodecTest {
 
   @Test
   public void testRandomAlphanumeric() {
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 128; i++) {
       final String alhpanum = RandomStringUtils.randomAlphanumeric(100);
       assertEquals(alhpanum, RSUrlCodec.encode(alhpanum));
     }
@@ -99,7 +100,7 @@ public class RSUrlCodecTest {
 
   @Test
   public void testFormCompatibility() throws Exception {
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < 256; i++) {
       final String fakeString = RandomStringUtils.random(1024);
       final String ourEncoded = RSUrlCodec.getFormEncoder().encode(fakeString);
       final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
@@ -112,7 +113,7 @@ public class RSUrlCodecTest {
     // Encode nothing
     final RSUrlCodec.Encoder neverEncodeEncoder =
         RSUrlCodec.getEncoder().withSafeCharPredicate(_i -> true).encodeSpaceToPlus(false);
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < 256; i++) {
       final String fakeString = RandomStringUtils.randomAlphanumeric(1024);
       final String encoded = neverEncodeEncoder.encode(fakeString);
       assertEquals(fakeString, encoded);
@@ -138,7 +139,7 @@ public class RSUrlCodecTest {
     }
 
     // Test rules that don't make sense
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < 256; i++) {
       final String toEncode = RandomStringUtils.randomAlphanumeric(1024);
       final IntPredicate randomPred = _i -> ThreadLocalRandom.current().nextBoolean();
       final RSUrlCodec.Encoder randomPredEncoder =
@@ -218,6 +219,16 @@ public class RSUrlCodecTest {
         RSUrlCodec.getLenientDecoder().decodePlusToSpace(true));
     assertNotSame(RSUrlCodec.getLenientDecoder(),
         RSUrlCodec.getLenientDecoder().decodePlusToSpace(false));
+  }
+
+  @Test
+  public void testCharBuffer() {
+    for (int i = 0; i < 128; i++) {
+      final String original = RandomStringUtils.random(1024);
+      final String encoded = RSUrlCodec.encode(original);
+      assertEquals(encoded, RSUrlCodec.encode(CharBuffer.wrap(original.toCharArray())));
+      assertEquals(original, RSUrlCodec.decode(CharBuffer.wrap(encoded.toCharArray())));
+    }
   }
 
 }
