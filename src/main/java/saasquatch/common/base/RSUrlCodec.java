@@ -271,7 +271,7 @@ public final class RSUrlCodec {
            * consecutive % sequences and turn those into one single byte array.
            */
           if (chars.remaining() < 2) {
-            // underflow
+            // Underflow. Error if strict.
             if (strict) {
               throw new IllegalArgumentException(
                   "Invalid URL encoding: Incomplete trailing escape (%) pattern");
@@ -279,6 +279,7 @@ public final class RSUrlCodec {
             resultBuf.put('%');
             continue;
           }
+          // Rewind to put the '%' back
           chars.position(chars.position() - 1);
           // Clear the buffer
           decBuf.clear();
