@@ -9,12 +9,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import saasquatch.common.base.RSThrowables;
 
 public final class RSThreads {
-  private static final Logger logger = LoggerFactory.getLogger(RSThreads.class);
 
   private RSThreads() {}
 
@@ -34,9 +30,8 @@ public final class RSThreads {
         threadLocalsField = tlField;
       }
       tlField.set(t, null);
-    } catch (Throwable e) {
-      logger.error("Error encountered when cleaning threadLocals", e);
-      RSThrowables.wrapAndThrow(e);
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
     }
   }
 
