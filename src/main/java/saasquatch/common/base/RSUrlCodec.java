@@ -259,16 +259,16 @@ public final class RSUrlCodec {
       final CharBuffer chars = toCharBuffer(s);
       final CharBuffer resultBuf = CharBuffer.allocate(s.length());
       /*
-       * Buffer used for decoding one set of % sequences. Assuming the entire input only consists of
-       * % sequences, we only need its length / 3 bytes.
+       * Buffer used for decoding one set of % patterns. Assuming the entire input only consists of
+       * % patterns, we only need its length / 3 bytes.
        */
       final ByteBuffer decBuf = ByteBuffer.allocate(s.length() / 3);
-      while (chars.hasRemaining()) {
+      mainCharsLoop: while (chars.hasRemaining()) {
         final char c = chars.get();
         if (c == '%') {
           /*
            * We hit a '%', and in order to preserve unsafe characters, we need to process all the
-           * consecutive % sequences and turn those into one single byte array.
+           * consecutive % patterns and turn those into one single byte array.
            */
           if (chars.remaining() < 2) {
             // Underflow. Error if strict.
@@ -277,17 +277,17 @@ public final class RSUrlCodec {
                   "Invalid URL encoding: Incomplete trailing escape (%) pattern");
             }
             resultBuf.put('%');
-            continue;
+            continue mainCharsLoop;
           }
           // Rewind to put the '%' back
           chars.position(chars.position() - 1);
           // Clear the buffer
           decBuf.clear();
-          do {
+          escapePatternLoop: do {
             if (chars.get() != '%') {
-              // The % sequences ended. Rewind one char and bail out.
+              // The % pattern ended. Rewind one char and bail out.
               chars.position(chars.position() - 1);
-              break;
+              break escapePatternLoop;
             }
             final char uc = chars.get();
             final char lc = chars.get();
@@ -302,12 +302,12 @@ public final class RSUrlCodec {
                   + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
             } else {
               /*
-               * The sequence has an invalid digit, so we need to output the '%' and rewind, since
-               * the 2 characters can potentially start a new encoding sequence.
+               * The pattern has an invalid digit, so we need to output the '%' and rewind, since
+               * the 2 characters can potentially start a new encoding pattern.
                */
               decBuf.put(percentBytes);
               chars.position(chars.position() - 2);
-              break;
+              break escapePatternLoop;
             }
           } while (chars.remaining() > 2);
           // The byte array has been built. Now decode it and output it.
