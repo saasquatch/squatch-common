@@ -263,20 +263,20 @@ public class RSUrlCodecTest {
       assertEquals("óò%ñ(%╯%°□°)╯ā︵ ┻%━┻%😂ā", RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE)
           .decode("óò%ñ(%╯%°□°)╯%01%01︵ ┻%━┻%😂%01%01"));
     }
-    testUtf32: {
-      final Charset utf32;
+    testUtf32be: {
+      final Charset utf32be;
       try {
-        utf32 = Charset.forName("UTF-32");
+        utf32be = Charset.forName("UTF-32BE");
       } catch (UnsupportedCharsetException e) {
         System.out.println("UTF-32 unsupported. Skipping tests.");
-        break testUtf32;
+        break testUtf32be;
       }
       final String original = "óòñ(╯°□°)╯ā︵ ┻━┻😂ā";
       final String encoded = "óòñ(╯°□°)╯%00%00%01%01︵ ┻━┻😂%00%00%01%01";
-      assertEquals(original, RSUrlCodec.getDecoder().withCharset(utf32).decode(encoded));
-      assertEquals(original, RSUrlCodec.getLenientDecoder().withCharset(utf32).decode(encoded));
-      assertEquals(original, URLDecoder.decode(encoded, utf32.name()));
-      assertEquals("ó%ò%ñ(╯°□°)╯ā︵ ┻%━%┻😂ā", RSUrlCodec.getLenientDecoder().withCharset(utf32)
+      assertEquals(original, RSUrlCodec.getDecoder().withCharset(utf32be).decode(encoded));
+      assertEquals(original, RSUrlCodec.getLenientDecoder().withCharset(utf32be).decode(encoded));
+      assertEquals(original, URLDecoder.decode(encoded, utf32be.name()));
+      assertEquals("ó%ò%ñ(╯°□°)╯ā︵ ┻%━%┻😂ā", RSUrlCodec.getLenientDecoder().withCharset(utf32be)
           .decode("ó%ò%ñ(╯°□°)╯%00%00%01%01︵ ┻%━%┻😂%00%00%01%01"));
     }
   }
