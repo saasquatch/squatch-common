@@ -163,7 +163,7 @@ public final class RSUrlCodec {
      * URL encode
      */
     public String encode(@Nonnull CharSequence s) {
-      final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
+      final ByteBuffer bytes = charset.encode(toCharBuffer(s));
       final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
       while (bytes.hasRemaining()) {
         final int b = bytes.get() & 0xFF;
@@ -259,7 +259,7 @@ public final class RSUrlCodec {
     }
 
     private String decodeStrict(@Nonnull CharSequence s) {
-      final CharBuffer chars = CharBuffer.wrap(s);
+      final CharBuffer chars = toCharBuffer(s);
       final ByteBuffer buf = ByteBuffer.allocate(s.length());
       while (chars.hasRemaining()) {
         final char c = chars.get();
@@ -283,14 +283,13 @@ public final class RSUrlCodec {
     }
 
     private String decodeLenient(@Nonnull CharSequence s) {
-      // Not using CharBuffer since we'll need to rewind
-      final int len = s.length();
-      final ByteBuffer buf = ByteBuffer.allocate(len);
-      for (int i = 0; i < len;) {
-        final char c = s.charAt(i++);
-        if (c == '%' && len - i >= 2) {
-          final int u = digit16(s.charAt(i++));
-          final int l = digit16(s.charAt(i++));
+      final CharBuffer chars = toCharBuffer(s);
+      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      while (chars.hasRemaining()) {
+        final char c = chars.get();
+        if (c == '%' && chars.remaining() >= 2) {
+          final int u = digit16(chars.get());
+          final int l = digit16(chars.get());
           if (u != -1 && l != -1) {
             // Both digits are valid.
             buf.put((byte) ((u << 4) + l));
@@ -300,7 +299,7 @@ public final class RSUrlCodec {
              * 2 characters can potentially start a new encoding sequence.
              */
             buf.put((byte) '%');
-            i -= 2;
+            chars.position(chars.position() - 2);
           }
         } else if (plusToSpace && c == '+') {
           buf.put((byte) ' ');
@@ -312,6 +311,14 @@ public final class RSUrlCodec {
       return charset.decode(buf).toString();
     }
 
+  }
+
+  private static CharBuffer toCharBuffer(@Nonnull CharSequence s) {
+    if (s instanceof CharBuffer) {
+      return (CharBuffer) s;
+    } else {
+      return CharBuffer.wrap(s);
+    }
   }
 
   private static char hexDigit(int b, boolean upperCase) {
