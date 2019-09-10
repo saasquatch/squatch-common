@@ -186,8 +186,10 @@ public class RSUrlCodecTest {
 
   @Test
   public void testEncoderConfig() {
-    assertEquals("%0A%00", RSUrlCodec.getEncoder().withCharset(UTF_16LE).upperCase().encode("\n"));
-    assertEquals("%00%0a", RSUrlCodec.getEncoder().withCharset(UTF_16BE).lowerCase().encode("\n"));
+    assertEquals("%0A%00%0A%00",
+        RSUrlCodec.getEncoder().withCharset(UTF_16LE).upperCase().encode("\n\n"));
+    assertEquals("%00%0a%00%0a",
+        RSUrlCodec.getEncoder().withCharset(UTF_16BE).lowerCase().encode("\n\n"));
     assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().withCharset(UTF_8));
     assertSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().upperCase());
     assertNotSame(RSUrlCodec.getEncoder(), RSUrlCodec.getEncoder().lowerCase());
@@ -203,8 +205,8 @@ public class RSUrlCodecTest {
 
   @Test
   public void testDecoderConfig() {
-    assertEquals("\n", RSUrlCodec.getDecoder().withCharset(UTF_16LE).decode("%0A%00"));
-    assertEquals("\n", RSUrlCodec.getDecoder().withCharset(UTF_16BE).decode("%00%0a"));
+    assertEquals("\n\n", RSUrlCodec.getDecoder().withCharset(UTF_16LE).decode("%0A%00%0a%00"));
+    assertEquals("\n\n", RSUrlCodec.getDecoder().withCharset(UTF_16BE).decode("%00%0a%00%0A"));
     assertThrows(IllegalArgumentException.class,
         () -> RSUrlCodec.getLenientDecoder().strict().decode("%%44"));
     assertSame(RSUrlCodec.getDecoder(), RSUrlCodec.getDecoder().withCharset(UTF_8));

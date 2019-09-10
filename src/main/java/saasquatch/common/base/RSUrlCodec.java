@@ -198,11 +198,13 @@ public final class RSUrlCodec {
     private final Charset charset;
     private final boolean plusToSpace;
     private final boolean strict;
+    private final byte[] percentBytes;
 
     private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean strict) {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
       this.strict = strict;
+      this.percentBytes = new String(new char[] {'%'}).getBytes(charset);
     }
 
     /**
@@ -255,44 +257,59 @@ public final class RSUrlCodec {
      */
     public String decode(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
-      final ByteBuffer buf = ByteBuffer.allocate(s.length());
+      final CharBuffer buf = CharBuffer.allocate(s.length());
       while (chars.hasRemaining()) {
         final char c = chars.get();
         if (c == '%') {
           if (chars.remaining() < 2) {
+            // underflow
             if (strict) {
               throw new IllegalArgumentException(
                   "Invalid URL encoding: Incomplete trailing escape (%) pattern");
             }
-            buf.put((byte) '%');
+            buf.put('%');
             continue;
           }
-          final char uc = chars.get();
-          final char lc = chars.get();
-          final int u = digit16(uc);
-          final int l = digit16(lc);
-          if (u != -1 && l != -1) {
-            // Both digits are valid.
-            buf.put((byte) ((u << 4) + l));
-          } else if (strict) {
-            throw new IllegalArgumentException("Invalid URL encoding: "
-                + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
-          } else {
-            /*
-             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
-             * 2 characters can potentially start a new encoding sequence.
-             */
-            buf.put((byte) '%');
-            chars.position(chars.position() - 2);
+          chars.position(chars.position() - 1);
+          final ByteBuffer decBuf = ByteBuffer.allocate(chars.remaining() / 3);
+          do {
+            if (chars.get() != '%') {
+              chars.position(chars.position() - 1);
+              break;
+            }
+            final char uc = chars.get();
+            final char lc = chars.get();
+            final int u = digit16(uc);
+            final int l = digit16(lc);
+            if (u != -1 && l != -1) {
+              // Both digits are valid
+              decBuf.put((byte) ((u << 4) + l));
+            } else if (strict) {
+              // We have an invalid digit and we are in strict mode
+              throw new IllegalArgumentException("Invalid URL encoding: "
+                  + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
+            } else {
+              /*
+               * The sequence has an invalid digit, so we need to output the '%' and rewind, since
+               * the 2 characters can potentially start a new encoding sequence.
+               */
+              decBuf.put(percentBytes);
+              chars.position(chars.position() - 2);
+              break;
+            }
+          } while (chars.remaining() > 2);
+          decBuf.flip();
+          if (decBuf.hasRemaining()) {
+            buf.put(charset.decode(decBuf));
           }
         } else if (plusToSpace && c == '+') {
-          buf.put((byte) ' ');
+          buf.put(' ');
         } else {
-          buf.put((byte) c);
+          buf.put(c);
         }
       }
       buf.flip();
-      return charset.decode(buf).toString();
+      return buf.toString();
     }
 
   }
