@@ -1,7 +1,6 @@
 package saasquatch.common.base;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -255,44 +254,29 @@ public final class RSUrlCodec {
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      return strict ? decodeStrict(s) : decodeLenient(s);
-    }
-
-    private String decodeStrict(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
       final ByteBuffer buf = ByteBuffer.allocate(s.length());
       while (chars.hasRemaining()) {
         final char c = chars.get();
         if (c == '%') {
-          try {
-            final int u = digit16Strict(chars.get());
-            final int l = digit16Strict(chars.get());
-            buf.put((byte) ((u << 4) + l));
-          } catch (BufferUnderflowException e) {
-            throw new IllegalArgumentException(
-                "Invalid URL encoding: Incomplete trailing escape (%) pattern", e);
+          if (chars.remaining() < 2) {
+            if (strict) {
+              throw new IllegalArgumentException(
+                  "Invalid URL encoding: Incomplete trailing escape (%) pattern");
+            }
+            buf.put((byte) '%');
+            continue;
           }
-        } else if (plusToSpace && c == '+') {
-          buf.put((byte) ' ');
-        } else {
-          buf.put((byte) c);
-        }
-      }
-      buf.flip();
-      return charset.decode(buf).toString();
-    }
-
-    private String decodeLenient(@Nonnull CharSequence s) {
-      final CharBuffer chars = toCharBuffer(s);
-      final ByteBuffer buf = ByteBuffer.allocate(s.length());
-      while (chars.hasRemaining()) {
-        final char c = chars.get();
-        if (c == '%' && chars.remaining() >= 2) {
-          final int u = digit16(chars.get());
-          final int l = digit16(chars.get());
+          final char uc = chars.get();
+          final char lc = chars.get();
+          final int u = digit16(uc);
+          final int l = digit16(lc);
           if (u != -1 && l != -1) {
             // Both digits are valid.
             buf.put((byte) ((u << 4) + l));
+          } else if (strict) {
+            throw new IllegalArgumentException("Invalid URL encoding: "
+                + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
           } else {
             /*
              * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
@@ -339,15 +323,6 @@ public final class RSUrlCodec {
     } else {
       return -1;
     }
-  }
-
-  private static int digit16Strict(char c) {
-    final int i = digit16(c);
-    if (i == -1) {
-      throw new IllegalArgumentException(
-          "Invalid URL encoding: Illegal hex characters in escape (%) pattern: " + c);
-    }
-    return i;
   }
 
   private static boolean isAsciiAlphaNum(int c) {
