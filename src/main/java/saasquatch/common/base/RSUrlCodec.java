@@ -163,6 +163,7 @@ public final class RSUrlCodec {
      */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(toCharBuffer(s));
+      // One byte can at most be turned into 3 chars
       final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
       while (bytes.hasRemaining()) {
         final int b = bytes.get() & 0xFF;
@@ -260,7 +261,7 @@ public final class RSUrlCodec {
       final CharBuffer resultBuf = CharBuffer.allocate(s.length());
       /*
        * Buffer used for decoding one set of % patterns. Assuming the entire input only consists of
-       * % patterns, we only need its length / 3 bytes.
+       * % patterns, we only need its length / 3 bytes. This will be reused for all the patterns.
        */
       final ByteBuffer decBuf = ByteBuffer.allocate(s.length() / 3);
       mainCharsLoop: while (chars.hasRemaining()) {
@@ -309,7 +310,7 @@ public final class RSUrlCodec {
               chars.position(chars.position() - 2);
               break escapePatternLoop;
             }
-          } while (chars.remaining() > 2);
+          } while (chars.remaining() >= 3);
           // The byte array has been built. Now decode it and output it.
           decBuf.flip();
           if (decBuf.hasRemaining()) {
