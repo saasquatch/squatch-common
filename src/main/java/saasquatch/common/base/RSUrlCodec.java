@@ -258,6 +258,11 @@ public final class RSUrlCodec {
     public String decode(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
       final CharBuffer resultBuf = CharBuffer.allocate(s.length());
+      /*
+       * Buffer used for decoding one set of % sequences. Assuming the entire input only consists of
+       * % sequences, we only need its length / 3 bytes.
+       */
+      final ByteBuffer decBuf = ByteBuffer.allocate(s.length() / 3);
       while (chars.hasRemaining()) {
         final char c = chars.get();
         if (c == '%') {
@@ -275,8 +280,8 @@ public final class RSUrlCodec {
             continue;
           }
           chars.position(chars.position() - 1);
-          // Assuming we are only left with % sequences, we need to allocate remaining / 3.
-          final ByteBuffer decBuf = ByteBuffer.allocate(chars.remaining() / 3);
+          // Clear the buffer
+          decBuf.clear();
           do {
             if (chars.get() != '%') {
               // The % sequences ended. Rewind one char and bail out.
