@@ -163,21 +163,21 @@ public final class RSUrlCodec {
      */
     public String encode(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(toCharBuffer(s));
-      final CharBuffer buf = CharBuffer.allocate(bytes.remaining() * 3);
+      final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
       while (bytes.hasRemaining()) {
         final int b = bytes.get() & 0xFF;
         if (safeCharPredicate.test(b)) {
-          buf.put((char) b);
+          resultBuf.put((char) b);
         } else if (spaceToPlus && b == ' ') {
-          buf.put('+');
+          resultBuf.put('+');
         } else {
-          buf.put('%');
-          buf.put(hexDigit(b >> 4, upperCase));
-          buf.put(hexDigit(b, upperCase));
+          resultBuf.put('%');
+          resultBuf.put(hexDigit(b >> 4, upperCase));
+          resultBuf.put(hexDigit(b, upperCase));
         }
       }
-      buf.flip();
-      return buf.toString();
+      resultBuf.flip();
+      return resultBuf.toString();
     }
 
   }
@@ -257,23 +257,29 @@ public final class RSUrlCodec {
      */
     public String decode(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
-      final CharBuffer buf = CharBuffer.allocate(s.length());
+      final CharBuffer resultBuf = CharBuffer.allocate(s.length());
       while (chars.hasRemaining()) {
         final char c = chars.get();
         if (c == '%') {
+          /*
+           * We hit a '%', and in order to preserve unsafe characters, we need to process all the
+           * consecutive % sequences and turn those into one single byte array.
+           */
           if (chars.remaining() < 2) {
             // underflow
             if (strict) {
               throw new IllegalArgumentException(
                   "Invalid URL encoding: Incomplete trailing escape (%) pattern");
             }
-            buf.put('%');
+            resultBuf.put('%');
             continue;
           }
           chars.position(chars.position() - 1);
+          // Assuming we are only left with % sequences, we need to allocate remaining / 3.
           final ByteBuffer decBuf = ByteBuffer.allocate(chars.remaining() / 3);
           do {
             if (chars.get() != '%') {
+              // The % sequences ended. Rewind one char and bail out.
               chars.position(chars.position() - 1);
               break;
             }
@@ -298,18 +304,19 @@ public final class RSUrlCodec {
               break;
             }
           } while (chars.remaining() > 2);
+          // The byte array has been built. Now decode it and output it.
           decBuf.flip();
           if (decBuf.hasRemaining()) {
-            buf.put(charset.decode(decBuf));
+            resultBuf.put(charset.decode(decBuf));
           }
         } else if (plusToSpace && c == '+') {
-          buf.put(' ');
+          resultBuf.put(' ');
         } else {
-          buf.put(c);
+          resultBuf.put(c);
         }
       }
-      buf.flip();
-      return buf.toString();
+      resultBuf.flip();
+      return resultBuf.toString();
     }
 
   }
