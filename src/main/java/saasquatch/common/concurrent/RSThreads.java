@@ -34,7 +34,7 @@ public final class RSThreads {
         threadLocalsField = tlField;
       }
       tlField.set(t, null);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       logger.error("Error encountered when cleaning threadLocals", e);
       RSThrowables.wrapAndThrow(e);
     }
