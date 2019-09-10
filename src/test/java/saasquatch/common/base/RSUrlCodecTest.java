@@ -233,4 +233,22 @@ public class RSUrlCodecTest {
     }
   }
 
+  @Test
+  public void testDecodeNonAscii() throws Exception {
+    assertEquals("óòñ(╯°□°)╯D︵ ┻━┻😂D", RSUrlCodec.decode("óòñ(╯°□°)╯%44︵ ┻━┻😂%44"));
+    assertEquals("óòñ(╯°□°)╯D︵ ┻━┻😂D",
+        RSUrlCodec.getLenientDecoder().decode("óòñ(╯°□°)╯%44︵ ┻━┻😂%44"));
+    assertEquals("óòñ(╯°□°)╯D︵ ┻━┻😂D", URLDecoder.decode("óòñ(╯°□°)╯%44︵ ┻━┻😂%44", UTF_8.name()));
+    assertEquals("ó%ò%ñ(╯°□°%)╯D︵ ┻%%━%┻😂D",
+        RSUrlCodec.getLenientDecoder().decode("ó%ò%ñ(╯°□°%)╯%44︵ ┻%%━%┻😂%44"));
+    assertEquals("óòñ(╯°□°)╯ā︵ ┻━┻😂ā",
+        RSUrlCodec.getDecoder().withCharset(UTF_16LE).decode("óòñ(╯°□°)╯%01%01︵ ┻━┻😂%01%01"));
+    assertEquals("óòñ(╯°□°)╯ā︵ ┻━┻😂ā", RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE)
+        .decode("óòñ(╯°□°)╯%01%01︵ ┻━┻😂%01%01"));
+    assertEquals("óòñ(╯°□°)╯ā︵ ┻━┻😂ā",
+        URLDecoder.decode("óòñ(╯°□°)╯%01%01︵ ┻━┻😂%01%01", UTF_16LE.name()));
+    assertEquals("óò%ñ(%╯%°□°)╯ā︵ ┻%━┻%😂ā", RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE)
+        .decode("óò%ñ(%╯%°□°)╯%01%01︵ ┻%━┻%😂%01%01"));
+  }
+
 }
