@@ -12,6 +12,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntPredicate;
@@ -249,18 +251,34 @@ public class RSUrlCodecTest {
       assertEquals(original, RSUrlCodec.decode(encoded));
       assertEquals(original, RSUrlCodec.getLenientDecoder().decode(encoded));
       assertEquals(original, URLDecoder.decode(encoded, UTF_8.name()));
+      assertEquals("ó%ò%ñ(╯°□°%)╯D︵ ┻%%━%┻😂D",
+          RSUrlCodec.getLenientDecoder().decode("ó%ò%ñ(╯°□°%)╯%44︵ ┻%%━%┻😂%44"));
     }
-    assertEquals("ó%ò%ñ(╯°□°%)╯D︵ ┻%%━%┻😂D",
-        RSUrlCodec.getLenientDecoder().decode("ó%ò%ñ(╯°□°%)╯%44︵ ┻%%━%┻😂%44"));
     {
       final String original = "óòñ(╯°□°)╯ā︵ ┻━┻😂ā";
       final String encoded = "óòñ(╯°□°)╯%01%01︵ ┻━┻😂%01%01";
       assertEquals(original, RSUrlCodec.getDecoder().withCharset(UTF_16LE).decode(encoded));
       assertEquals(original, RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE).decode(encoded));
       assertEquals(original, URLDecoder.decode(encoded, UTF_16LE.name()));
+      assertEquals("óò%ñ(%╯%°□°)╯ā︵ ┻%━┻%😂ā", RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE)
+          .decode("óò%ñ(%╯%°□°)╯%01%01︵ ┻%━┻%😂%01%01"));
     }
-    assertEquals("óò%ñ(%╯%°□°)╯ā︵ ┻%━┻%😂ā", RSUrlCodec.getLenientDecoder().withCharset(UTF_16LE)
-        .decode("óò%ñ(%╯%°□°)╯%01%01︵ ┻%━┻%😂%01%01"));
+    testUtf32: {
+      final Charset utf32;
+      try {
+        utf32 = Charset.forName("UTF-32");
+      } catch (UnsupportedCharsetException e) {
+        System.out.println("UTF-32 unsupported. Skipping tests.");
+        break testUtf32;
+      }
+      final String original = "óòñ(╯°□°)╯ā︵ ┻━┻😂ā";
+      final String encoded = "óòñ(╯°□°)╯%00%00%01%01︵ ┻━┻😂%00%00%01%01";
+      assertEquals(original, RSUrlCodec.getDecoder().withCharset(utf32).decode(encoded));
+      assertEquals(original, RSUrlCodec.getLenientDecoder().withCharset(utf32).decode(encoded));
+      assertEquals(original, URLDecoder.decode(encoded, utf32.name()));
+      assertEquals("ó%ò%ñ(╯°□°)╯ā︵ ┻%━%┻😂ā", RSUrlCodec.getLenientDecoder().withCharset(utf32)
+          .decode("ó%ò%ñ(╯°□°)╯%00%00%01%01︵ ┻%━%┻😂%00%00%01%01"));
+    }
   }
 
 }
