@@ -196,16 +196,21 @@ public final class RSUrlCodec {
     private static final Decoder STRICT = new Decoder(UTF_8, true, true);
     private static final Decoder LENIENT = STRICT.lenient();
 
+    /**
+     * '%' in bytes with the current {@link Charset}. This field is lazily initialized.
+     *
+     * @see #getPercentBytes()
+     */
+    private byte[] percentBytes;
+
     private final Charset charset;
     private final boolean plusToSpace;
     private final boolean strict;
-    private final byte[] percentBytes;
 
     private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean strict) {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
       this.strict = strict;
-      this.percentBytes = "%".getBytes(charset);
     }
 
     /**
@@ -306,7 +311,7 @@ public final class RSUrlCodec {
                * The pattern has an invalid digit, so we need to output the '%' and rewind, since
                * the 2 characters can potentially start a new encoding pattern.
                */
-              decBuf.put(percentBytes);
+              decBuf.put(getPercentBytes());
               chars.position(chars.position() - 2);
               break escapePatternLoop;
             }
@@ -324,6 +329,14 @@ public final class RSUrlCodec {
       }
       resultBuf.flip();
       return resultBuf.toString();
+    }
+
+    private byte[] getPercentBytes() {
+      byte[] result = percentBytes;
+      if (result == null) {
+        percentBytes = result = "%".getBytes(charset);
+      }
+      return result;
     }
 
   }
