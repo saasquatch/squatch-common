@@ -24,6 +24,12 @@ import com.google.common.collect.ImmutableMap;
 public class RSUrlCodecTest {
 
   @Test
+  public void testNull() {
+    assertThrows(NullPointerException.class, () -> RSUrlCodec.encode(null));
+    assertThrows(NullPointerException.class, () -> RSUrlCodec.decode(null));
+  }
+
+  @Test
   public void testRandomAlphanumeric() {
     for (int i = 0; i < 128; i++) {
       final String alhpanum = RandomStringUtils.randomAlphanumeric(100);
