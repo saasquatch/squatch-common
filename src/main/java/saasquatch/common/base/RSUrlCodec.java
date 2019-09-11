@@ -196,13 +196,6 @@ public final class RSUrlCodec {
     private static final Decoder STRICT = new Decoder(UTF_8, true, true);
     private static final Decoder LENIENT = STRICT.lenient();
 
-    /**
-     * '%' in bytes with the current {@link Charset}. This field is lazily initialized.
-     *
-     * @see #getPercentBytes()
-     */
-    private byte[] percentBytes;
-
     private final Charset charset;
     private final boolean plusToSpace;
     private final boolean strict;
@@ -289,6 +282,8 @@ public final class RSUrlCodec {
           chars.position(chars.position() - 1);
           // Clear the buffer
           decBuf.clear();
+          // Flag for whether we hit an invalid digit. Only applicable for lenient mode.
+          boolean hasInvalidDigit = false;
           escapePatternLoop: do {
             if (chars.get() != '%') {
               // The % pattern ended. Rewind one char and bail out.
@@ -308,10 +303,10 @@ public final class RSUrlCodec {
                   + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
             } else {
               /*
-               * The pattern has an invalid digit, so we need to output the '%' and rewind, since
-               * the 2 characters can potentially start a new encoding pattern.
+               * The pattern has an invalid digit, so we need to signal to output the '%' and
+               * rewind, since the 2 characters can potentially start a new encoding pattern.
                */
-              decBuf.put(getPercentBytes());
+              hasInvalidDigit = true;
               chars.position(chars.position() - 2);
               break escapePatternLoop;
             }
@@ -321,6 +316,13 @@ public final class RSUrlCodec {
           if (decBuf.hasRemaining()) {
             resultBuf.put(charset.decode(decBuf));
           }
+          if (hasInvalidDigit) {
+            /*
+             * If we hit an invalid digit, we need to output the leading '%' and leave the digits
+             * alone
+             */
+            resultBuf.put('%');
+          }
         } else if (plusToSpace && c == '+') {
           resultBuf.put(' ');
         } else {
@@ -329,14 +331,6 @@ public final class RSUrlCodec {
       }
       resultBuf.flip();
       return resultBuf.toString();
-    }
-
-    private byte[] getPercentBytes() {
-      byte[] result = percentBytes;
-      if (result == null) {
-        percentBytes = result = "%".getBytes(charset);
-      }
-      return result;
     }
 
   }
