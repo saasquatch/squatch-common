@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import saasquatch.common.base.RSThrowables;
 
 public final class RSThreads {
 
@@ -31,7 +32,7 @@ public final class RSThreads {
       }
       tlField.set(t, null);
     } catch (ReflectiveOperationException e) {
-      throw new RuntimeException(e);
+      RSThrowables.wrapAndThrow(e);
     }
   }
 
