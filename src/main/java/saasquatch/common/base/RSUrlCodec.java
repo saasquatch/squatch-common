@@ -205,7 +205,7 @@ public final class RSUrlCodec {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
       this.strict = strict;
-      this.percentBytes = new String(new char[] {'%'}).getBytes(charset);
+      this.percentBytes = "%".getBytes(charset);
     }
 
     /**
