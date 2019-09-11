@@ -83,7 +83,7 @@ public final class RSThrowables {
    * @see #getCauseChain(Throwable)
    */
   public static <X extends Throwable> Optional<? extends X> findFirstInCauseChain(
-      @Nonnull Throwable t, Class<? extends X> exceptionClass) {
+      @Nonnull Throwable t, @Nonnull Class<? extends X> exceptionClass) {
     return getCauseChainStream(t)
         .filter(exceptionClass::isInstance)
         .map(exceptionClass::cast)
@@ -107,7 +107,7 @@ public final class RSThrowables {
    * </pre>
    */
   public static <X extends Throwable> void unwrapAndThrow(@Nonnull Throwable t,
-      Class<? extends X> exceptionClass) throws X {
+      @Nonnull Class<? extends X> exceptionClass) throws X {
     final X ex = findFirstInCauseChain(t, exceptionClass).orElse(null);
     if (ex != null)
       throw ex;

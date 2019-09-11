@@ -33,8 +33,8 @@ public class RSThrowablesTest {
     assertEquals(Arrays.asList(e5, e4, e3, e2, e1, e0), basicCauseChain);
     final Iterable<Throwable> causeChainIterable = RSThrowables.getCauseChain(e5);
     assertEquals(basicCauseChain, ImmutableList.copyOf(causeChainIterable));
-    final List<Throwable> causeChainListFromStream = RSThrowables.getCauseChainStream(e5)
-        .collect(Collectors.toList());
+    final List<Throwable> causeChainListFromStream =
+        RSThrowables.getCauseChainStream(e5).collect(Collectors.toList());
     assertEquals(basicCauseChain, causeChainListFromStream);
   }
 
@@ -152,11 +152,12 @@ public class RSThrowablesTest {
   }
 
   @Test
-  public void testWrapAndThrowNull() {
-    try {
-      RSThrowables.wrapAndThrow(null);
-      fail();
-    } catch (NullPointerException expected) {}
+  public void testNull() {
+    assertThrows(NullPointerException.class, () -> RSThrowables.wrapAndThrow(null));
+    assertThrows(NullPointerException.class,
+        () -> RSThrowables.findFirstInCauseChain(null, Exception.class));
+    assertThrows(NullPointerException.class,
+        () -> RSThrowables.findFirstInCauseChain(new IllegalArgumentException(), null));
   }
 
   /**
