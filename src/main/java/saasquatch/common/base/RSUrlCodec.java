@@ -198,7 +198,7 @@ public final class RSUrlCodec {
           encBuf.flip();
           final ByteBuffer encBytes = charset.encode(encBuf);
           while (encBytes.hasRemaining()) {
-            final int b = encBytes.get() & 0xFF;
+            final int b = encBytes.get()/* & 0xFF */;
             resultBuf.append('%');
             resultBuf.append(hexDigit(b >> 4, upperCase));
             resultBuf.append(hexDigit(b, upperCase));
