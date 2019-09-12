@@ -161,7 +161,7 @@ public final class RSUrlCodec {
     /**
      * URL encode
      */
-    public String encode(@Nonnull CharSequence s) {
+    public String encode2(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(toCharBuffer(s));
       // One byte can at most be turned into 3 chars
       final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
@@ -178,6 +178,53 @@ public final class RSUrlCodec {
         }
       }
       resultBuf.flip();
+      return resultBuf.toString();
+    }
+
+    public String encode(@Nonnull CharSequence s) {
+      final CharBuffer chars = toCharBuffer(s);
+      /*
+       * Not using CharBuffer since it's hard to predict how many characters we will end up having
+       * depending on the charsets.
+       */
+      final StringBuilder resultBuf = new StringBuilder(chars.remaining() * 3);
+      // The buffer used for encoding sequences. It will be reused for all the encoding sequences.
+      final CharBuffer encBuf = CharBuffer.allocate(chars.remaining());
+      while (chars.hasRemaining()) {
+        final char c = chars.get();
+        if (safeCharPredicate.test(c)) {
+          // Got a safe char. Output it.
+          resultBuf.append(c);
+        } else if (spaceToPlus && c == ' ') {
+          // Got a space and this encoder is set to encode space to plus
+          resultBuf.append('+');
+        } else {
+          /*
+           * We hit a char that needs to be encoded. Keep going until we hit another safe char or
+           * space and encode all those chars together.
+           */
+          chars.position(chars.position() - 1);
+          // Clear the buffer
+          encBuf.clear();
+          encSequenceLoop: do {
+            final char encChar = chars.get();
+            if (safeCharPredicate.test(encChar) || (spaceToPlus && encChar == ' ')) {
+              chars.position(chars.position() - 1);
+              break encSequenceLoop;
+            }
+            encBuf.put(encChar);
+          } while (chars.hasRemaining());
+          // Encode the sequence together
+          encBuf.flip();
+          final ByteBuffer encBytes = charset.encode(encBuf);
+          while (encBytes.hasRemaining()) {
+            final int b = encBytes.get() & 0xFF;
+            resultBuf.append('%');
+            resultBuf.append(hexDigit(b >> 4, upperCase));
+            resultBuf.append(hexDigit(b, upperCase));
+          }
+        }
+      }
       return resultBuf.toString();
     }
 
