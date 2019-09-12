@@ -27,6 +27,9 @@ public class RSUrlCodecTest {
   public void testNull() {
     assertThrows(NullPointerException.class, () -> RSUrlCodec.encode(null));
     assertThrows(NullPointerException.class, () -> RSUrlCodec.decode(null));
+    assertThrows(NullPointerException.class, () -> RSUrlCodec.getEncoder().encode(null));
+    assertThrows(NullPointerException.class, () -> RSUrlCodec.getDecoder().decode(null));
+    assertThrows(NullPointerException.class, () -> RSUrlCodec.getLenientDecoder().decode(null));
   }
 
   @Test
