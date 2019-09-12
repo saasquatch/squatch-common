@@ -85,23 +85,21 @@ public final class RSUrlCodec {
   public static final class Encoder {
 
     private static final Encoder RFC3986 =
-        new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true, true);
+        new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true);
     private static final Encoder FORM =
-        new Encoder(UTF_8, RSUrlCodec::isWwwFormUrlSafe, true, true, true);
+        new Encoder(UTF_8, RSUrlCodec::isWwwFormUrlSafe, true, true);
 
     private final Charset charset;
     private final IntPredicate safeCharPredicate;
     private final boolean spaceToPlus;
     private final boolean upperCase;
-    private final boolean asciiOnly;
 
     private Encoder(@Nonnull Charset charset, @Nonnull IntPredicate safeCharPredicate,
-        boolean spaceToPlus, boolean upperCase, boolean asciiOnly) {
+        boolean spaceToPlus, boolean upperCase) {
       this.charset = charset;
       this.safeCharPredicate = safeCharPredicate;
       this.spaceToPlus = spaceToPlus;
       this.upperCase = upperCase;
-      this.asciiOnly = asciiOnly;
     }
 
     /**
@@ -112,8 +110,7 @@ public final class RSUrlCodec {
       if (this.charset.equals(charset)) {
         return this;
       }
-      return new Encoder(charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase,
-          this.asciiOnly);
+      return new Encoder(charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
     /**
@@ -122,8 +119,7 @@ public final class RSUrlCodec {
      */
     public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
       Objects.requireNonNull(safeCharPredicate);
-      return new Encoder(this.charset, safeCharPredicate, this.spaceToPlus, this.upperCase,
-          this.asciiOnly);
+      return new Encoder(this.charset, safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
     /**
@@ -138,8 +134,7 @@ public final class RSUrlCodec {
       if (this.spaceToPlus == spaceToPlus) {
         return this;
       }
-      return new Encoder(this.charset, this.safeCharPredicate, spaceToPlus, this.upperCase,
-          this.asciiOnly);
+      return new Encoder(this.charset, this.safeCharPredicate, spaceToPlus, this.upperCase);
     }
 
     /**
@@ -160,46 +155,13 @@ public final class RSUrlCodec {
       if (this.upperCase == upperCase) {
         return this;
       }
-      return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, upperCase,
-          this.asciiOnly);
-    }
-
-    public Encoder encodeToAsciiOnly(boolean asciiOnly) {
-      if (this.asciiOnly == asciiOnly) {
-        return this;
-      }
-      return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, this.upperCase,
-          asciiOnly);
+      return new Encoder(this.charset, this.safeCharPredicate, this.spaceToPlus, upperCase);
     }
 
     /**
      * URL encode
      */
     public String encode(@Nonnull CharSequence s) {
-      return asciiOnly ? encodeAscii(s) : encodeNonAscii(s);
-    }
-
-    private String encodeAscii(@Nonnull CharSequence s) {
-      final ByteBuffer bytes = charset.encode(toCharBuffer(s));
-      // One byte can at most be turned into 3 chars
-      final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
-      while (bytes.hasRemaining()) {
-        final int b = bytes.get() & 0xFF;
-        if (safeCharPredicate.test(b)) {
-          resultBuf.put((char) b);
-        } else if (spaceToPlus && b == ' ') {
-          resultBuf.put('+');
-        } else {
-          resultBuf.put('%');
-          resultBuf.put(hexDigit(b >> 4, upperCase));
-          resultBuf.put(hexDigit(b, upperCase));
-        }
-      }
-      resultBuf.flip();
-      return resultBuf.toString();
-    }
-
-    private String encodeNonAscii(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
       /*
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
@@ -258,20 +220,17 @@ public final class RSUrlCodec {
   @Immutable
   public static final class Decoder {
 
-    private static final Decoder STRICT = new Decoder(UTF_8, true, true, true);
+    private static final Decoder STRICT = new Decoder(UTF_8, true, true);
     private static final Decoder LENIENT = STRICT.lenient();
 
     private final Charset charset;
     private final boolean plusToSpace;
     private final boolean strict;
-    private final boolean asciiOnly;
 
-    private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean strict,
-        boolean asciiOnly) {
+    private Decoder(@Nonnull Charset charset, boolean plusToSpace, boolean strict) {
       this.charset = charset;
       this.plusToSpace = plusToSpace;
       this.strict = strict;
-      this.asciiOnly = asciiOnly;
     }
 
     /**
@@ -282,7 +241,7 @@ public final class RSUrlCodec {
       if (this.charset.equals(charset)) {
         return this;
       }
-      return new Decoder(charset, this.plusToSpace, this.strict, this.asciiOnly);
+      return new Decoder(charset, this.plusToSpace, this.strict);
     }
 
     /**
@@ -294,7 +253,7 @@ public final class RSUrlCodec {
       if (this.plusToSpace == plusToSpace) {
         return this;
       }
-      return new Decoder(this.charset, plusToSpace, this.strict, this.asciiOnly);
+      return new Decoder(this.charset, plusToSpace, this.strict);
     }
 
     /**
@@ -316,68 +275,13 @@ public final class RSUrlCodec {
       if (this.strict == strict) {
         return this;
       }
-      return new Decoder(this.charset, this.plusToSpace, strict, this.asciiOnly);
-    }
-
-    public Decoder decodeAsciiOnly(boolean asciiOnly) {
-      if (this.asciiOnly == asciiOnly) {
-        return this;
-      }
-      return new Decoder(this.charset, this.plusToSpace, this.strict, asciiOnly);
+      return new Decoder(this.charset, this.plusToSpace, strict);
     }
 
     /**
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      return asciiOnly ? decodeAscii(s) : decodeNonAscii(s);
-    }
-
-    private String decodeAscii(@Nonnull CharSequence s) {
-      final CharBuffer chars = toCharBuffer(s);
-      final ByteBuffer buf = ByteBuffer.allocate(chars.remaining());
-      while (chars.hasRemaining()) {
-        final char c = chars.get();
-        if (c == '%'/* && len - i >= 2 */) {
-          if (chars.remaining() < 2) {
-            // Underflow
-            if (strict) {
-              throw new IllegalArgumentException(
-                  "Invalid URL encoding: Incomplete trailing escape (%) pattern");
-            }
-            buf.put((byte) '%');
-            continue;
-          }
-          final char uc = chars.get();
-          final char lc = chars.get();
-          final int u = digit16(uc);
-          final int l = digit16(lc);
-          if (u != -1 && l != -1) {
-            // Both digits are valid.
-            buf.put((byte) ((u << 4) + l));
-          } else if (strict) {
-            // We have an invalid digit and we are in strict mode
-            throw new IllegalArgumentException("Invalid URL encoding: "
-                + "Illegal hex characters in escape (%) pattern: %" + uc + lc);
-          } else {
-            /*
-             * The sequence has an invalid digit, so we need to output the '%' and rewind, since the
-             * 2 characters can potentially start a new encoding sequence.
-             */
-            buf.put((byte) '%');
-            chars.position(chars.position() - 2);
-          }
-        } else if (plusToSpace && c == '+') {
-          buf.put((byte) ' ');
-        } else {
-          buf.put((byte) c);
-        }
-      }
-      buf.flip();
-      return charset.decode(buf).toString();
-    }
-
-    private String decodeNonAscii(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
       final CharBuffer resultBuf = CharBuffer.allocate(s.length());
       /*
