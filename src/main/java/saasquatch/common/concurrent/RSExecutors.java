@@ -23,6 +23,7 @@ public final class RSExecutors {
   }
 
   private static enum TPTExecutor implements Executor {
+
     DAEMON(true), NON_DAEMON(false),;
 
     private final boolean daemon;
@@ -40,6 +41,7 @@ public final class RSExecutors {
       t.setDaemon(daemon);
       t.start();
     }
+
   }
 
   public static ExecutorService asExecutorService(@Nonnull Executor executor) {

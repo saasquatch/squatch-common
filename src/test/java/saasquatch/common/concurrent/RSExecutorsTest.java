@@ -2,6 +2,7 @@ package saasquatch.common.concurrent;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -39,7 +40,24 @@ public class RSExecutorsTest {
     {
       final ExecutorService executorService =
           RSExecutors.asExecutorService(RSExecutors.threadPerTaskExecutor(true));
-      assertTrue(MoreExecutors.shutdownAndAwaitTermination(executorService, 1, TimeUnit.SECONDS));
+      assertTrue(
+          MoreExecutors.shutdownAndAwaitTermination(executorService, 1, TimeUnit.MILLISECONDS));
+    }
+    {
+      final ExecutorService executorService =
+          RSExecutors.asExecutorService(RSExecutors.threadPerTaskExecutor(true));
+      executorService.execute(() -> {
+        try {
+          Thread.sleep(50);
+        } catch (InterruptedException e) {
+        }
+      });
+      assertFalse(
+          MoreExecutors.shutdownAndAwaitTermination(executorService, 1, TimeUnit.MILLISECONDS));
+      assertFalse(
+          MoreExecutors.shutdownAndAwaitTermination(executorService, 1, TimeUnit.MILLISECONDS));
+      assertTrue(
+          MoreExecutors.shutdownAndAwaitTermination(executorService, 50, TimeUnit.MILLISECONDS));
     }
   }
 
