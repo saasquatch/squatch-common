@@ -103,7 +103,9 @@ public final class RSJackson {
   public static ObjectNode renameField(@Nonnull final ObjectNode json,
       @Nonnull final String oldName, @Nonnull final String newName) {
     final ObjectNode result = json.deepCopy();
-    if (!result.has(oldName)) return result;
+    if (!result.has(oldName)) {
+      return result;
+    }
     result.set(newName, result.path(oldName));
     result.remove(oldName);
     return result;

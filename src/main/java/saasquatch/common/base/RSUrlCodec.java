@@ -1,13 +1,18 @@
 package saasquatch.common.base;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.IntPredicate;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+import saasquatch.common.collect.RSCollectors;
 
 /**
  * Util for URL encoding/decoding. Methods in this class are more standards-compliant and more
@@ -84,6 +89,13 @@ public final class RSUrlCodec {
   @Immutable
   public static final class Encoder {
 
+    /**
+     * A {@link Set} of single-byte {@link Charset}s. It's not necessarily an exhaustive list and
+     * it's only used for optimization.
+     */
+    private static final Set<Charset> SINGLE_BYTE_CHARSETS =
+        Stream.of(UTF_8, US_ASCII, ISO_8859_1).collect(RSCollectors.toUnmodifiableSet());
+
     private static final Encoder RFC3986 =
         new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true);
     private static final Encoder FORM =
@@ -114,8 +126,16 @@ public final class RSUrlCodec {
     }
 
     /**
-     * @return a new {@link Encoder} with the specified predicate that determines whether a
-     *         character is safe and does not need to be encoded
+     * @param safeCharPredicate predicate that determines whether a character is safe and does not
+     *        need to be encoded.<br>
+     *        Note that this predicate is expected to be:
+     *        <ul>
+     *        <li>Stateless without side effects.</li>
+     *        <li>The resulting encoded strings only contain ASCII characters, which is the RFC
+     *        standard for URLs.</li>
+     *        </ul>
+     *        Failing to meet these expectations may cause unexpected behaviors.
+     * @return a new {@link Encoder} with the specified predicate
      */
     public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
       Objects.requireNonNull(safeCharPredicate);
@@ -162,6 +182,17 @@ public final class RSUrlCodec {
      * URL encode
      */
     public String encode(@Nonnull CharSequence s) {
+      if (SINGLE_BYTE_CHARSETS.contains(charset)) {
+        return encodeSingleByte(s);
+      } else {
+        return encodeMultiByte(s);
+      }
+    }
+
+    /**
+     * Do encoding for single-byte charsets
+     */
+    private String encodeSingleByte(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(toCharBuffer(s));
       // One byte can at most be turned into 3 chars
       final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
@@ -178,6 +209,57 @@ public final class RSUrlCodec {
         }
       }
       resultBuf.flip();
+      return resultBuf.toString();
+    }
+
+    /**
+     * Do encoding for multi-byte charsets. Note that this method is capable of handling single-byte
+     * charsets, but it's not recommended because it's slower.
+     */
+    private String encodeMultiByte(@Nonnull CharSequence s) {
+      final CharBuffer chars = toCharBuffer(s);
+      /*
+       * Not using CharBuffer since it's hard to predict how many characters we will end up having
+       * depending on the charsets.
+       */
+      final StringBuilder resultBuf = new StringBuilder(chars.remaining() * 3);
+      // The buffer used for encoding sequences. It will be reused for all the encoding sequences.
+      final CharBuffer encBuf = CharBuffer.allocate(chars.remaining());
+      while (chars.hasRemaining()) {
+        final char c = chars.get();
+        if (safeCharPredicate.test(c)) {
+          // Got a safe char. Output it.
+          resultBuf.append(c);
+        } else if (spaceToPlus && c == ' ') {
+          // Got a space and this encoder is set to encode space to plus
+          resultBuf.append('+');
+        } else {
+          /*
+           * We hit a char that needs to be encoded. Keep going until we hit another safe char or
+           * space and encode all those chars together.
+           */
+          chars.position(chars.position() - 1);
+          // Clear the buffer
+          encBuf.clear();
+          encSequenceLoop: do {
+            final char encChar = chars.get();
+            if (safeCharPredicate.test(encChar) || (spaceToPlus && encChar == ' ')) {
+              chars.position(chars.position() - 1);
+              break encSequenceLoop;
+            }
+            encBuf.put(encChar);
+          } while (chars.hasRemaining());
+          // Encode the sequence together
+          encBuf.flip();
+          final ByteBuffer encBytes = charset.encode(encBuf);
+          while (encBytes.hasRemaining()) {
+            final int b = encBytes.get()/* & 0xFF */;
+            resultBuf.append('%');
+            resultBuf.append(hexDigit(b >> 4, upperCase));
+            resultBuf.append(hexDigit(b, upperCase));
+          }
+        }
+      }
       return resultBuf.toString();
     }
 

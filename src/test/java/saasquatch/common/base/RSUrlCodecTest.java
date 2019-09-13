@@ -1,5 +1,7 @@
 package saasquatch.common.base;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -153,10 +155,29 @@ public class RSUrlCodecTest {
 
   @Test
   public void testFormCompatibility() throws Exception {
+    testFormCompatibility(UTF_8);
+    testFormCompatibility(US_ASCII);
+    testFormCompatibility(ISO_8859_1);
+    testFormCompatibility(UTF_16BE);
+    testFormCompatibility(UTF_16LE);
+    try {
+      testFormCompatibility(Charset.forName("UTF-32BE"));
+    } catch (UnsupportedCharsetException e) {
+      System.out.println("UTF-32 unsupported. Skipping tests.");
+    }
+    try {
+      testFormCompatibility(Charset.forName("UTF-32LE"));
+    } catch (UnsupportedCharsetException e) {
+      System.out.println("UTF-32 unsupported. Skipping tests.");
+    }
+  }
+
+  private void testFormCompatibility(Charset charset) throws Exception {
     for (int i = 0; i < 256; i++) {
       final String fakeString = RandomStringUtils.random(1024);
-      final String ourEncoded = RSUrlCodec.getFormEncoder().encode(fakeString);
-      final String javaEncoded = URLEncoder.encode(fakeString, UTF_8.name());
+      final String ourEncoded =
+          RSUrlCodec.getFormEncoder().withCharset(charset).encode(fakeString);
+      final String javaEncoded = URLEncoder.encode(fakeString, charset.name());
       assertEquals(javaEncoded, ourEncoded);
     }
   }
