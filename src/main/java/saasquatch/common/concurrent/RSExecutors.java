@@ -1,6 +1,8 @@
 package saasquatch.common.concurrent;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import javax.annotation.Nonnull;
 
 /**
  * Utilities for {@link Executor}s.
@@ -38,6 +40,13 @@ public final class RSExecutors {
       t.setDaemon(daemon);
       t.start();
     }
+  }
+
+  public static ExecutorService asExecutorService(@Nonnull Executor executor) {
+    if (executor instanceof ExecutorService) {
+      return (ExecutorService) executor;
+    }
+    return new ExecutorExecutorService(executor);
   }
 
 }

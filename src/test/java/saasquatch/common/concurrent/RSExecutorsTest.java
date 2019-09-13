@@ -1,10 +1,14 @@
 package saasquatch.common.concurrent;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class RSExecutorsTest {
 
@@ -28,6 +32,15 @@ public class RSExecutorsTest {
       assertEquals("RSExecutors.threadPerTaskExecutor(non-daemon)",
           Thread.currentThread().getThreadGroup().getName());
     }, RSExecutors.threadPerTaskExecutor(false)).join();
+  }
+
+  @Test
+  public void testExecutorServiceAdapter() {
+    {
+      final ExecutorService executorService =
+          RSExecutors.asExecutorService(RSExecutors.threadPerTaskExecutor(true));
+      assertTrue(MoreExecutors.shutdownAndAwaitTermination(executorService, 1, TimeUnit.SECONDS));
+    }
   }
 
 }
