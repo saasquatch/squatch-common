@@ -1,13 +1,18 @@
 package saasquatch.common.base;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.IntPredicate;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
+import saasquatch.common.collect.RSCollectors;
 
 /**
  * Util for URL encoding/decoding. Methods in this class are more standards-compliant and more
@@ -83,6 +88,13 @@ public final class RSUrlCodec {
    */
   @Immutable
   public static final class Encoder {
+
+    /**
+     * A {@link Set} of single-byte {@link Charset}s. It's not necessarily an exhaustive list and
+     * it's only used for optimization.
+     */
+    private static final Set<Charset> SINGLE_BYTE_CHARSETS =
+        Stream.of(UTF_8, US_ASCII, ISO_8859_1).collect(RSCollectors.toUnmodifiableSet());
 
     private static final Encoder RFC3986 =
         new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true);
@@ -162,6 +174,41 @@ public final class RSUrlCodec {
      * URL encode
      */
     public String encode(@Nonnull CharSequence s) {
+      if (SINGLE_BYTE_CHARSETS.contains(charset)) {
+        return encodeSingleByte(s);
+      } else {
+        return encodeMultiByte(s);
+      }
+    }
+
+    /**
+     * Do encoding for single-byte charsets
+     */
+    private String encodeSingleByte(@Nonnull CharSequence s) {
+      final ByteBuffer bytes = charset.encode(toCharBuffer(s));
+      // One byte can at most be turned into 3 chars
+      final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
+      while (bytes.hasRemaining()) {
+        final int b = bytes.get() & 0xFF;
+        if (safeCharPredicate.test(b)) {
+          resultBuf.put((char) b);
+        } else if (spaceToPlus && b == ' ') {
+          resultBuf.put('+');
+        } else {
+          resultBuf.put('%');
+          resultBuf.put(hexDigit(b >> 4, upperCase));
+          resultBuf.put(hexDigit(b, upperCase));
+        }
+      }
+      resultBuf.flip();
+      return resultBuf.toString();
+    }
+
+    /**
+     * Do encoding for multi-byte charsets. Note that this method is capable of handling single-byte
+     * charsets, but it's not recommended because it's slower.
+     */
+    private String encodeMultiByte(@Nonnull CharSequence s) {
       final CharBuffer chars = toCharBuffer(s);
       /*
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
