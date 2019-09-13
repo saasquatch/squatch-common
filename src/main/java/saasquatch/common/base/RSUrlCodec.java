@@ -126,8 +126,16 @@ public final class RSUrlCodec {
     }
 
     /**
-     * @return a new {@link Encoder} with the specified predicate that determines whether a
-     *         character is safe and does not need to be encoded
+     * @param safeCharPredicate predicate that determines whether a character is safe and does not
+     *        need to be encoded.<br>
+     *        Note that this predicate is expected to be:
+     *        <ul>
+     *        <li>Stateless without side effects.</li>
+     *        <li>The resulting encoded strings only contain ASCII characters, which is the RFC
+     *        standard for URLs.</li>
+     *        </ul>
+     *        Failing to meet these expectations may cause unexpected behaviors.
+     * @return a new {@link Encoder} with the specified predicate
      */
     public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
       Objects.requireNonNull(safeCharPredicate);
