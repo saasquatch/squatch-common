@@ -2,6 +2,7 @@ package saasquatch.common.concurrent;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
 
 /**
@@ -26,19 +27,23 @@ public final class RSExecutors {
 
     DAEMON(true), NON_DAEMON(false),;
 
-    private final boolean daemon;
+    private final AtomicLong threadIndex = new AtomicLong();
+    private final String threadGroupName;
     private final ThreadGroup threadGroup;
+    private final boolean daemon;
 
     private TPTExecutor(boolean daemon) {
       this.daemon = daemon;
-      this.threadGroup = new ThreadGroup(String.format("%s.threadPerTaskExecutor(%sdaemon)",
-          RSExecutors.class.getSimpleName(), daemon ? "" : "non-"));
+      this.threadGroupName = String.format("%s.threadPerTaskExecutor(%sdaemon)",
+          RSExecutors.class.getSimpleName(), daemon ? "" : "non-");
+      this.threadGroup = new ThreadGroup(threadGroupName);
     }
 
     @Override
     public void execute(Runnable command) {
       final Thread t = new Thread(threadGroup, command);
       t.setDaemon(daemon);
+      t.setName(threadGroupName + '-' + threadIndex.getAndIncrement());
       t.start();
     }
 
