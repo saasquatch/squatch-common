@@ -28,7 +28,7 @@ public final class RSExecutors {
 
     private TPTExecutor(boolean daemon) {
       this.daemon = daemon;
-      this.threadGroup = new ThreadGroup(String.format("%s.threadPerTaskExecutor (%sdaemon)",
+      this.threadGroup = new ThreadGroup(String.format("%s.threadPerTaskExecutor(%sdaemon)",
           RSExecutors.class.getSimpleName(), daemon ? "" : "non-"));
     }
 
