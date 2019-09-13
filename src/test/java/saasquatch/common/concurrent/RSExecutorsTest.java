@@ -1,6 +1,7 @@
 package saasquatch.common.concurrent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -23,10 +24,14 @@ public class RSExecutorsTest {
     CompletableFuture.runAsync(() -> {
       assertEquals("RSExecutors.threadPerTaskExecutor(daemon)",
           Thread.currentThread().getThreadGroup().getName());
+      assertTrue(Thread.currentThread().getName()
+          .startsWith("RSExecutors.threadPerTaskExecutor(daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(true)).join();
     CompletableFuture.runAsync(() -> {
       assertEquals("RSExecutors.threadPerTaskExecutor(non-daemon)",
           Thread.currentThread().getThreadGroup().getName());
+      assertTrue(Thread.currentThread().getName()
+          .startsWith("RSExecutors.threadPerTaskExecutor(non-daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(false)).join();
   }
 
