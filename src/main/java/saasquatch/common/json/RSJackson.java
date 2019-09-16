@@ -68,11 +68,8 @@ public final class RSJackson {
         newNode.set(k, mutateValueNodes(v, mutation));
       });
       return newNode;
-    } else if (json.isValueNode()) {
-      return mutation.apply((ValueNode) json);
     } else {
-      throw new AssertionError(
-          String.format("Unrecognized node type[%s]: %s", json.getClass(), json));
+      return mutation.apply((ValueNode) json);
     }
   }
 

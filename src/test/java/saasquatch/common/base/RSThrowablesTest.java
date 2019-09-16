@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import com.google.common.collect.ImmutableList;
@@ -96,6 +97,19 @@ public class RSThrowablesTest {
   }
 
   @Test
+  public void testSelfCause() {
+    final SelfCauseRuntimeException fakeException = new SelfCauseRuntimeException();
+    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
+  }
+
+  @Test
+  public void testCauseEquals() {
+    final FakeCauseAlwaysEqualsRuntimeException fakeException =
+        new FakeCauseAlwaysEqualsRuntimeException();
+    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
+  }
+
+  @Test
   public void testUnwrapAndThrow() {
     final String msg = "fake message";
     final Runnable throwingRunnable = () -> {
@@ -170,16 +184,28 @@ public class RSThrowablesTest {
   }
 
   @Test
-  public void testSelfCause() {
-    final SelfCauseRuntimeException fakeException = new SelfCauseRuntimeException();
-    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
-  }
-
-  @Test
-  public void testCauseEquals() {
-    final FakeCauseAlwaysEqualsRuntimeException fakeException =
-        new FakeCauseAlwaysEqualsRuntimeException();
-    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
+  public void testInterruptedException() {
+    final FutureTask<Object> futureTask = new FutureTask<>(() -> {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        RSThrowables.wrapAndThrow(e);
+      }
+      return null;
+    });
+    final Thread thread = new Thread(futureTask);
+    thread.setDaemon(true);
+    thread.start();
+    thread.interrupt();
+    try {
+      futureTask.get();
+      fail();
+    } catch (InterruptedException e) {
+      fail(e);
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof UndeclaredThrowableException);
+      assertTrue(e.getCause().getCause() instanceof InterruptedException);
+    }
   }
 
   /**
