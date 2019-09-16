@@ -75,6 +75,15 @@ public class RSThrowablesTest {
   }
 
   @Test
+  public void testUnlimited() {
+    final int largeLimit = 100_000;
+    final FakeCauseRuntimeException fakeException = new FakeCauseRuntimeException();
+    final int count =
+        (int) RSThrowables.getCauseChainStream(fakeException, 0).limit(largeLimit).count();
+    assertEquals(largeLimit, count);
+  }
+
+  @Test
   public void testCauseChainWithNull() {
     assertThrows(NullPointerException.class, () -> RSThrowables.getCauseChain(null));
   }
@@ -160,6 +169,19 @@ public class RSThrowablesTest {
         () -> RSThrowables.findFirstInCauseChain(new IllegalArgumentException(), null));
   }
 
+  @Test
+  public void testSelfCause() {
+    final SelfCauseRuntimeException fakeException = new SelfCauseRuntimeException();
+    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
+  }
+
+  @Test
+  public void testCauseEquals() {
+    final FakeCauseAlwaysEqualsRuntimeException fakeException =
+        new FakeCauseAlwaysEqualsRuntimeException();
+    assertEquals(Arrays.asList(fakeException), RSThrowables.getCauseChainList(fakeException, 0));
+  }
+
   /**
    * A fake Exception type where {@link #getCause()} always returns a new Exception to emulate an
    * infinite loop.
@@ -176,6 +198,41 @@ public class RSThrowablesTest {
        * this.equals(this.getCause()) will always return false.
        */
       return new FakeCauseRuntimeException();
+    }
+
+  }
+
+  /**
+   * A fake Exception type where {@link #getCause()} always returns itself.
+   *
+   * @author sli
+   */
+  static class SelfCauseRuntimeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public synchronized Throwable getCause() {
+      return this;
+    }
+
+  }
+
+  static class FakeCauseAlwaysEqualsRuntimeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return true;
+    }
+
+    @Override
+    public synchronized Throwable getCause() {
+      return new FakeCauseAlwaysEqualsRuntimeException();
     }
 
   }

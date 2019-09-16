@@ -38,8 +38,7 @@ public final class RSThrowables {
    * @param limit the limit for the cause chain. 0 for unlimited.
    */
   public static List<Throwable> getCauseChainList(@Nonnull Throwable t, int limit) {
-    return getCauseChainStream(t, limit)
-        .collect(RSCollectors.toUnmodifiableList());
+    return getCauseChainStream(t, limit).collect(RSCollectors.toUnmodifiableList());
   }
 
   /**
@@ -84,9 +83,7 @@ public final class RSThrowables {
    */
   public static <X extends Throwable> Optional<? extends X> findFirstInCauseChain(
       @Nonnull Throwable t, @Nonnull Class<? extends X> exceptionClass) {
-    return getCauseChainStream(t)
-        .filter(exceptionClass::isInstance)
-        .map(exceptionClass::cast)
+    return getCauseChainStream(t).filter(exceptionClass::isInstance).map(exceptionClass::cast)
         .findFirst();
   }
 
@@ -170,8 +167,13 @@ public final class RSThrowables {
 
     @Override
     public boolean hasNext() {
-      if (limit > 0 && count >= limit)
+      if (limit > 0 && count >= limit) {
         return false;
+      }
+      if (count == 0) {
+        // The root is always available
+        return true;
+      }
       return next != null && next != curr && !next.equals(curr);
     }
 
