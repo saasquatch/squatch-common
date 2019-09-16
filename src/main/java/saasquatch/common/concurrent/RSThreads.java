@@ -98,10 +98,11 @@ public final class RSThreads {
         }
       }
     }
-    if (i < threadInfo.getStackTrace().length) {
-      sb.append("\t...");
-      sb.append('\n');
-    }
+    // This was in the original code, but it shouldn't happen without the limit.
+    // if (i < threadInfo.getStackTrace().length) {
+    // sb.append("\t...");
+    // sb.append('\n');
+    // }
 
     LockInfo[] locks = threadInfo.getLockedSynchronizers();
     if (locks.length > 0) {

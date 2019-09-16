@@ -40,7 +40,6 @@ public final class RSHttpHeaders {
           }
         })
         .map(bytes -> new String(bytes, UTF_8))
-        .filter(s -> s.contains(":"))
         .map(s -> s.split(":", 2))
         .filter(tokens -> tokens.length == 2)
         .map(tokens -> new SimpleImmutableEntry<>(tokens[0], tokens[1]));

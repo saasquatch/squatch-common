@@ -87,7 +87,7 @@ public class RSHttpHeadersTest {
         RSHttpHeaders.getAcceptedEncodings(Collections.emptyList()));
     assertEquals(ImmutableSet.of("br", "gzip"), RSHttpHeaders.getAcceptedEncodings("br, gzip"));
     assertEquals(ImmutableSet.of("br", "gzip"),
-        RSHttpHeaders.getAcceptedEncodings("br;q=0.8, gzip,BR,*,iDENtity,,"));
+        RSHttpHeaders.getAcceptedEncodings("br;q=0.8, gzip,BR,*,iDENtity,  ,,"));
     assertEquals(ImmutableSet.of("br", "gzip", "x-gzip", "foobar"),
         RSHttpHeaders.getAcceptedEncodings(
             Arrays.asList("br, gzip,BR,iDENtity", "identity", "x-gzip,fooBAR")));
