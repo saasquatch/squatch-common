@@ -344,4 +344,10 @@ public class RSUrlCodecTest {
     }
   }
 
+  @Test
+  public void testDecodeFullWidth() throws Exception {
+    assertEquals(":", RSUrlCodec.decode("%3ａ"));
+    assertEquals(":", URLDecoder.decode("%3ａ", UTF_8.name()));
+  }
+
 }

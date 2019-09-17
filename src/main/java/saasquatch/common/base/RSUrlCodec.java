@@ -374,8 +374,8 @@ public final class RSUrlCodec {
             }
             final char uc = chars.get();
             final char lc = chars.get();
-            final int u = digit16(uc);
-            final int l = digit16(lc);
+            final int u = Character.digit(uc, 16);
+            final int l = Character.digit(lc, 16);
             if (u != -1 && l != -1) {
               // Both digits are valid
               decBuf.put((byte) ((u << 4) + l));
@@ -431,18 +431,6 @@ public final class RSUrlCodec {
       return (char) ('0' + digit);
     }
     return (char) ((upperCase ? 'A' : 'a') - 10 + digit);
-  }
-
-  private static int digit16(char c) {
-    if (c >= '0' && c <= '9') {
-      return c - '0';
-    } else if (c >= 'A' && c <= 'F') {
-      return c + 10 - 'A';
-    } else if (c >= 'a' && c <= 'f') {
-      return c + 10 - 'a';
-    } else {
-      return -1;
-    }
   }
 
   private static boolean isAsciiAlphaNum(int c) {
