@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
 
 public class RSThreadsTest {
@@ -32,6 +34,19 @@ public class RSThreadsTest {
 
   @Test
   public void testThreadDumpWorks() {
+    final Lock lock = new ReentrantLock();
+    for (int i = 0; i < 3; i++) {
+      RSExecutors.threadPerTaskExecutor(true).execute(() -> {
+        lock.lock();
+        try {
+          Thread.sleep(250);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } finally {
+          lock.unlock();
+        }
+      });
+    }
     final String fullThreadDump = RSThreads.fullThreadDump();
     assertTrue(fullThreadDump.length() > 128);
   }
