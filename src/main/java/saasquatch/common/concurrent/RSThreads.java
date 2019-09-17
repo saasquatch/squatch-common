@@ -32,7 +32,7 @@ public final class RSThreads {
         threadLocalsField = tlField;
       }
       tlField.set(t, null);
-    } catch (Throwable e) {
+    } catch (Exception e) {
       RSThrowables.wrapAndThrow(e);
     }
   }
