@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.security.Permission;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,28 @@ public class RSThreadsTest {
   public void testClearThreadLocalsNull() {
     assertThrows(NullPointerException.class, () -> RSThreads.clearThreadLocals(null),
         "NPE expected");
+  }
+
+  @Test
+  public void testClearThreadLocalsWithSecurityManager() {
+    RSThreads.threadLocalsField = null;
+    final SecurityManager customSecurityManager = new SecurityManager() {
+
+      @Override
+      public void checkPermission(Permission perm) {
+        if (perm.getName().toLowerCase().contains("access")) {
+          throw new SecurityException(perm.getName());
+        }
+      }
+
+    };
+    System.setSecurityManager(customSecurityManager);
+    try {
+      final Thread currentThread = Thread.currentThread();
+      assertThrows(SecurityException.class, () -> RSThreads.clearThreadLocals(currentThread));
+    } finally {
+      System.setSecurityManager(null);
+    }
   }
 
   @Test

@@ -15,7 +15,8 @@ public final class RSThreads {
 
   private RSThreads() {}
 
-  private static Field threadLocalsField;
+  // Visible for testing
+  static Field threadLocalsField;
 
   /**
    * The threadLocals field on a {@link Thread} object. We want to nuke this field after execution
@@ -31,7 +32,7 @@ public final class RSThreads {
         threadLocalsField = tlField;
       }
       tlField.set(t, null);
-    } catch (ReflectiveOperationException e) {
+    } catch (Throwable e) {
       RSThrowables.wrapAndThrow(e);
     }
   }
