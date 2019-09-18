@@ -28,6 +28,8 @@ public class RSUrlCodecTest {
   @Test
   public void testNull() {
     assertThrows(NullPointerException.class, () -> RSUrlCodec.encode(null));
+    assertThrows(NullPointerException.class,
+        () -> RSUrlCodec.getEncoder().withCharset(UTF_16LE).encode(null));
     assertThrows(NullPointerException.class, () -> RSUrlCodec.decode(null));
     assertThrows(NullPointerException.class, () -> RSUrlCodec.getEncoder().encode(null));
     assertThrows(NullPointerException.class, () -> RSUrlCodec.getDecoder().decode(null));
@@ -175,8 +177,7 @@ public class RSUrlCodecTest {
   private void testFormCompatibility(Charset charset) throws Exception {
     for (int i = 0; i < 256; i++) {
       final String fakeString = RandomStringUtils.random(1024);
-      final String ourEncoded =
-          RSUrlCodec.getFormEncoder().withCharset(charset).encode(fakeString);
+      final String ourEncoded = RSUrlCodec.getFormEncoder().withCharset(charset).encode(fakeString);
       final String javaEncoded = URLEncoder.encode(fakeString, charset.name());
       assertEquals(javaEncoded, ourEncoded);
     }
