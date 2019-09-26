@@ -31,7 +31,7 @@ Add the dependency:
 <dependency>
   <groupId>com.github.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
-  <version>0.0.9</version>
+  <version>0.0.10</version>
 </dependency>
 ```
 
