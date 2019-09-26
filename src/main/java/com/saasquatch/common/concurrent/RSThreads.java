@@ -49,70 +49,55 @@ public final class RSThreads {
   }
 
   /**
-   * Same as {@link ThreadInfo#toString()}, but removes the arbitrary stack trace limit.
+   * Similar to {@link ThreadInfo#toString()}, but removes the arbitrary stack trace limit.
    */
   public static String threadInfoToString(ThreadInfo threadInfo) {
-    StringBuilder sb = new StringBuilder("\"" + threadInfo.getThreadName() + "\"" + " Id="
-        + threadInfo.getThreadId() + " " + threadInfo.getThreadState());
+    final StringBuilder sb = new StringBuilder();
+    sb.append('"').append(threadInfo.getThreadName()).append('"').append(" Id=")
+        .append(threadInfo.getThreadId()).append(' ').append(threadInfo.getThreadState());
     if (threadInfo.getLockName() != null) {
-      sb.append(" on " + threadInfo.getLockName());
+      sb.append(" on ").append(threadInfo.getLockName());
     }
     if (threadInfo.getLockOwnerName() != null) {
-      sb.append(
-          " owned by \"" + threadInfo.getLockOwnerName() + "\" Id=" + threadInfo.getLockOwnerId());
-    }
-    if (threadInfo.isSuspended()) {
-      sb.append(" (suspended)");
+      sb.append(" owned by \"").append(threadInfo.getLockOwnerName()).append("\" Id=")
+          .append(threadInfo.getLockOwnerId());
     }
     if (threadInfo.isInNative()) {
       sb.append(" (in native)");
     }
     sb.append('\n');
-    int i = 0;
-    for (; i < threadInfo.getStackTrace().length /* && i < MAX_FRAMES */; i++) {
-      StackTraceElement ste = threadInfo.getStackTrace()[i];
-      sb.append("\tat " + ste.toString());
-      sb.append('\n');
-      if (i == 0 && threadInfo.getLockInfo() != null) {
-        Thread.State ts = threadInfo.getThreadState();
-        switch (ts) {
-          case BLOCKED:
-            sb.append("\t-  blocked on " + threadInfo.getLockInfo());
-            sb.append('\n');
-            break;
-          case WAITING:
-            sb.append("\t-  waiting on " + threadInfo.getLockInfo());
-            sb.append('\n');
-            break;
-          case TIMED_WAITING:
-            sb.append("\t-  waiting on " + threadInfo.getLockInfo());
-            sb.append('\n');
-            break;
-          default:
-        }
-      }
 
+    if (threadInfo.getLockInfo() != null) {
+      final Thread.State ts = threadInfo.getThreadState();
+      switch (ts) {
+        case BLOCKED:
+          sb.append("\t-  blocked on ").append(threadInfo.getLockInfo()).append('\n');
+          break;
+        case WAITING:
+          sb.append("\t-  waiting on ").append(threadInfo.getLockInfo()).append('\n');
+          break;
+        case TIMED_WAITING:
+          sb.append("\t-  waiting on ").append(threadInfo.getLockInfo()).append('\n');
+          break;
+        default:
+      }
+    }
+
+    for (int i = 0; i < threadInfo.getStackTrace().length; i++) {
+      sb.append("\tat ").append(threadInfo.getStackTrace()[i]).append('\n');
       for (MonitorInfo mi : threadInfo.getLockedMonitors()) {
         if (mi.getLockedStackDepth() == i) {
-          sb.append("\t-  locked " + mi);
-          sb.append('\n');
+          sb.append("\t-  locked ").append(mi).append('\n');
         }
       }
     }
-    // This was in the original code, but it shouldn't happen without the limit.
-    // if (i < threadInfo.getStackTrace().length) {
-    // sb.append("\t...");
-    // sb.append('\n');
-    // }
 
-    LockInfo[] locks = threadInfo.getLockedSynchronizers();
+    final LockInfo[] locks = threadInfo.getLockedSynchronizers();
     if (locks.length > 0) {
-      sb.append("\n\tNumber of locked synchronizers = " + locks.length);
-      sb.append('\n');
-      for (LockInfo li : locks) {
-        sb.append("\t- " + li);
-        sb.append('\n');
-      }
+      sb.append("\n\tNumber of locked synchronizers = ").append(locks.length).append('\n');
+    }
+    for (LockInfo li : locks) {
+      sb.append("\t- ").append(li).append('\n');
     }
     sb.append('\n');
     return sb.toString();
