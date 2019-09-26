@@ -8,8 +8,6 @@ import java.security.Permission;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
-import com.saasquatch.common.concurrent.RSExecutors;
-import com.saasquatch.common.concurrent.RSThreads;
 
 public class RSThreadsTest {
 
@@ -69,6 +67,18 @@ public class RSThreadsTest {
           e.printStackTrace();
         } finally {
           lock.unlock();
+        }
+      });
+    }
+    final Object mutex = new Object();
+    for (int i = 0; i < 3; i++) {
+      RSExecutors.threadPerTaskExecutor(true).execute(() -> {
+        synchronized (mutex) {
+          try {
+            Thread.sleep(250);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
         }
       });
     }
