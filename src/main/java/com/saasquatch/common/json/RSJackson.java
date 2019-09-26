@@ -110,13 +110,14 @@ public final class RSJackson {
 
   /**
    * Shallow merge an array of objects into one new object
+   *
+   * @param jsons JSONs to be merged. Note that all the elements are required to be
+   *        {@link ObjectNode}s.
    */
   public static ObjectNode shallowMerge(@Nonnull JsonNode... jsons) {
     final ObjectNode result = JsonNodeFactory.instance.objectNode();
     for (final JsonNode json : jsons) {
-      json.fields().forEachRemaining(entry -> {
-        result.set(entry.getKey(), entry.getValue());
-      });
+      result.setAll((ObjectNode) json);
     }
     return result;
   }
