@@ -64,4 +64,14 @@ public class RSExecutorsTest {
         .setDaemon(true).build().newThread(Runnables.doNothing()).isDaemon());
   }
 
+  @Test
+  public void testSimpleThreadFactoryPriority() {
+    CompletableFuture.runAsync(() -> {
+      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+      CompletableFuture.runAsync(() -> {
+        assertEquals(Thread.NORM_PRIORITY, Thread.currentThread().getPriority());
+      }, RSExecutors.threadPerTaskExecutor(true)).join();
+    }, RSExecutors.threadPerTaskExecutor(true)).join();
+  }
+
 }
