@@ -144,8 +144,9 @@ public final class RSUrlCodec {
 
     /**
      * @param spaceToPlus whether ' ' should be encoded to '+'. If false, ' ' characters are either
-     *        left alone or encoded to "%20" depending on the safeCharPredicate. Note that the
-     *        safeCharPredicate takes precedence over this.
+     *        left alone or encoded depending on the safeCharPredicate. Note that the
+     *        safeCharPredicate takes precedence over this, meaning that if ' ' is considered safe
+     *        by safeCharPredicate, this method does nothing.
      *
      * @return a new {@link Encoder} with the specified config
      * @see #withSafeCharPredicate(IntPredicate)
