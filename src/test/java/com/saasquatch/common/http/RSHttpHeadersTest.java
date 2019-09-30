@@ -66,6 +66,7 @@ public class RSHttpHeadersTest {
     assertEquals(emptyBasic, RSHttpHeaders.basicAuth("", null));
     assertEquals(emptyBasic, RSHttpHeaders.basicAuth(null, ""));
     assertEquals(emptyBasic, RSHttpHeaders.basicAuth(null, null));
+    assertThrows(NullPointerException.class, () -> RSHttpHeaders.basicAuth("", "", null));
   }
 
   @Test
