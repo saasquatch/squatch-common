@@ -1,5 +1,6 @@
 package com.saasquatch.common.concurrent;
 
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,7 +20,7 @@ enum RSThreadPerTaskExecutor implements Executor {
 
   RSThreadPerTaskExecutor(boolean daemon) {
     this.daemon = daemon;
-    this.baseThreadName = String.format("%s.threadPerTaskExecutor(%sdaemon)-",
+    this.baseThreadName = String.format(Locale.ROOT, "%s.threadPerTaskExecutor(%sdaemon)-",
         RSExecutors.class.getSimpleName(), daemon ? "" : "non-");
   }
 

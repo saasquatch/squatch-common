@@ -1,5 +1,6 @@
 package com.saasquatch.common.concurrent;
 
+import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -13,8 +14,8 @@ enum RSSimpleThreadFactory implements ThreadFactory {
   DAEMON(true), NON_DAEMON(false),;
 
   // Visible for testing
-  static final ThreadGroup threadGroup =
-      new ThreadGroup(String.format("%s.simpleThreadFactory", RSExecutors.class.getSimpleName()));
+  static final ThreadGroup threadGroup = new ThreadGroup(
+      String.format(Locale.ROOT, "%s.simpleThreadFactory", RSExecutors.class.getSimpleName()));
 
   private final boolean daemon;
 
