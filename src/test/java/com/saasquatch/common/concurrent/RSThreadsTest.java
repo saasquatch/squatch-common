@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.security.Permission;
+import java.util.Locale;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class RSThreadsTest {
 
       @Override
       public void checkPermission(Permission perm) {
-        if (perm.getName().toLowerCase().contains("access")) {
+        if (perm.getName().toLowerCase(Locale.ROOT).contains("access")) {
           throw new SecurityException(perm.getName());
         }
       }

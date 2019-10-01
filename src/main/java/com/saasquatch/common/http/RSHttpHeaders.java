@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -85,7 +86,7 @@ public final class RSHttpHeaders {
         })
         .map(String::trim)
         .filter(s -> s.length() > 0)
-        .map(String::toLowerCase)
+        .map(s -> s.toLowerCase(Locale.ROOT))
         .filter(s -> !"identity".equals(s))
         .filter(s -> !"*".equals(s))
         .collect(RSCollectors.toUnmodifiableSet());
