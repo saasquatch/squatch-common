@@ -11,8 +11,7 @@ public final class RSStrings {
 
   /**
    * Truncate a String to fit a UTF-8 bytes size.<br>
-   * Source:
-   * https://stackoverflow.com/questions/119328/how-do-i-truncate-a-java-string-to-fit-in-a-given-number-of-bytes-once-utf-8-en
+   * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
    */
   public static String truncateToUtf8ByteSize(String s, int maxBytes) {
     if (maxBytes < 0)

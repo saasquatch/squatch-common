@@ -8,6 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
+/**
+ * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
+ */
 public class RSStringsTest {
 
   private static void _testUtf8TruncationExample(String s, int maxBytes, int expectedBytes) {
