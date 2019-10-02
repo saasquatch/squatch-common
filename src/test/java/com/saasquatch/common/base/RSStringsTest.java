@@ -8,11 +8,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
-/**
- * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
- */
 public class RSStringsTest {
 
+  @Test
+  public void testLocaleRootFormat() {
+    assertEquals("1.500000", RSStrings.format("%f", 1.5));
+  }
+
+  /**
+   * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
+   */
   private static void _testUtf8TruncationExample(String s, int maxBytes, int expectedBytes) {
     String result = RSStrings.truncateToUtf8ByteSize(s, maxBytes);
     byte[] utf8 = result.getBytes(UTF_8);
@@ -22,6 +27,9 @@ public class RSStringsTest {
     // System.out.println(s + " truncated to " + result);
   }
 
+  /**
+   * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
+   */
   @Test
   public void testUtf8TruncationExamples() {
     _testUtf8TruncationExample("abcd", 0, 0);

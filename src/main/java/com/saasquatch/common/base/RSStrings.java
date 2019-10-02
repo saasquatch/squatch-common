@@ -1,5 +1,9 @@
 package com.saasquatch.common.base;
 
+import java.util.Locale;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Utilities for strings
  *
@@ -10,10 +14,18 @@ public final class RSStrings {
   private RSStrings() {}
 
   /**
+   * Convenience method for {@link String#format(Locale, String, Object...)} with
+   * {@link Locale#ROOT}
+   */
+  public static String format(@Nonnull String format, Object... args) {
+    return String.format(Locale.ROOT, format, args);
+  }
+
+  /**
    * Truncate a String to fit a UTF-8 bytes size.<br>
    * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
    */
-  public static String truncateToUtf8ByteSize(String s, int maxBytes) {
+  public static String truncateToUtf8ByteSize(@Nullable String s, int maxBytes) {
     if (maxBytes < 0)
       throw new IllegalArgumentException();
     if (s == null)
