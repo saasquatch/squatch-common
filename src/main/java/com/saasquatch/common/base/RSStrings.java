@@ -1,5 +1,10 @@
 package com.saasquatch.common.base;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.Locale;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,40 +27,35 @@ public final class RSStrings {
   }
 
   /**
-   * Truncate a String to fit a UTF-8 bytes size.<br>
-   * <a href="https://stackoverflow.com/questions/119328">Stack Overflow Source</a>
+   * Truncate a String to fit a UTF-8 bytes size
    */
-  public static String truncateToUtf8ByteSize(@Nullable String s, int maxBytes) {
+  public static String truncateToUtf8ByteSize(@Nullable CharSequence s, int maxBytes) {
+    return truncateToByteSize(s, maxBytes, UTF_8);
+  }
+
+  /**
+   * Truncate a String to fit a byte size for a {@link Charset}
+   */
+  public static String truncateToByteSize(@Nullable CharSequence s, int maxBytes,
+      @Nonnull Charset charset) {
     if (maxBytes < 0)
       throw new IllegalArgumentException();
     if (s == null)
       return null;
-    int b = 0;
-    for (int i = 0; i < s.length(); i++) {
-      final char c = s.charAt(i);
-      // ranges from http://en.wikipedia.org/wiki/UTF-8
-      int skip = 0;
-      final int more;
-      if (c <= 0x007F) {
-        more = 1;
-      } else if (c <= 0x07FF) {
-        more = 2;
-      } else if (c <= 0xD7FF) {
-        more = 3;
-      } else if (c <= 0xDFFF) {
-        // surrogate area, consume next char as well
-        more = 4;
-        skip = 1;
-      } else {
-        more = 3;
-      }
-      b += more;
-      if (b > maxBytes) {
-        return s.substring(0, i);
-      }
-      i += skip;
+    final CharBuffer in = toCharBuffer(s);
+    final ByteBuffer out = ByteBuffer.allocate(maxBytes);
+    final CharsetEncoder encoder = charset.newEncoder();
+    encoder.encode(in, out, true);
+    out.flip();
+    return charset.decode(out).toString();
+  }
+
+  static CharBuffer toCharBuffer(@Nonnull CharSequence s) {
+    if (s instanceof CharBuffer) {
+      return (CharBuffer) s;
+    } else {
+      return CharBuffer.wrap(s);
     }
-    return s;
   }
 
 }
