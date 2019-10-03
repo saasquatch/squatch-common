@@ -17,7 +17,7 @@ public class RSStringsTest {
   }
 
   @Test
-  public void testUtf8Truncation() {
+  public void testUtf8ByteSizeTruncation() {
     for (int i = 0; i < 1024; i++) {
       final String s = RandomStringUtils.random(1024);
       assertTrue(s.getBytes(UTF_8).length > 512);
@@ -29,8 +29,13 @@ public class RSStringsTest {
   }
 
   @Test
-  public void testTruncatingFullChar() {
+  public void testByteSizeTruncatingFullChar() {
     assertEquals("ab", RSStrings.truncateToByteSize("abc", 5, UTF_16BE));
+  }
+
+  @Test
+  public void testByteSizeTruncatingWithLargeLimit() {
+    assertEquals("abc", RSStrings.truncateToUtf8ByteSize("abc", 1024));
   }
 
   @Test
