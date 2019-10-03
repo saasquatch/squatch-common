@@ -55,7 +55,7 @@ public final class RSHttpHeaders {
   }
 
   /**
-   * Generate a Basic Authorization header
+   * Generate a Basic Authorization header with UTF-8 encoding
    */
   public static String basicAuth(@Nullable String username, @Nullable String password) {
     return basicAuth(username, password, UTF_8);

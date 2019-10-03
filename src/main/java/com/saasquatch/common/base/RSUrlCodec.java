@@ -68,7 +68,7 @@ public final class RSUrlCodec {
   }
 
   /**
-   * URL decode in strict mode
+   * URL decode in strict mode with UTF-8
    *
    * @throws IllegalArgumentException if the input contains invalid URL encodings
    * @see #getDecoder()
@@ -191,7 +191,7 @@ public final class RSUrlCodec {
     }
 
     /**
-     * Do encoding for single-byte charsets
+     * Do encoding for single-byte charsets that are supersets of ASCII
      */
     private String encodeSingleByte(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(RSStrings.toCharBuffer(s));
