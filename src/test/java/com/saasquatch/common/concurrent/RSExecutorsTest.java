@@ -76,4 +76,12 @@ public class RSExecutorsTest {
     }, RSExecutors.threadPerTaskExecutor(true)).join();
   }
 
+  @Test
+  public void testThreadPerTaskExecutorToStrings() {
+    assertEquals("RSExecutors.threadPerTaskExecutor(daemon)",
+        RSExecutors.threadPerTaskExecutor(true).toString());
+    assertEquals("RSExecutors.threadPerTaskExecutor(non-daemon)",
+        RSExecutors.threadPerTaskExecutor(false).toString());
+  }
+
 }
