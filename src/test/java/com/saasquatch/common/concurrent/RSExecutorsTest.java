@@ -44,8 +44,7 @@ public class RSExecutorsTest {
   @Test
   public void testSimpleThreadFactoryWrapping() {
     {
-      final Thread newThread =
-          RSExecutors.simpleThreadFactory(true).newThread(EMPTY_RUNNABLE);
+      final Thread newThread = RSExecutors.simpleThreadFactory(true).newThread(EMPTY_RUNNABLE);
       assertEquals("", newThread.getName());
     }
     {
@@ -82,6 +81,14 @@ public class RSExecutorsTest {
         RSExecutors.threadPerTaskExecutor(true).toString());
     assertEquals("RSExecutors.threadPerTaskExecutor(non-daemon)",
         RSExecutors.threadPerTaskExecutor(false).toString());
+  }
+
+  @Test
+  public void testSimpleThreadFactoryToString() {
+    assertEquals("RSExecutors.simpleThreadFactory(daemon)",
+        RSExecutors.simpleThreadFactory(true).toString());
+    assertEquals("RSExecutors.simpleThreadFactory(non-daemon)",
+        RSExecutors.simpleThreadFactory(false).toString());
   }
 
 }
