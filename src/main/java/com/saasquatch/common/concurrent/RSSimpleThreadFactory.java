@@ -1,7 +1,7 @@
 package com.saasquatch.common.concurrent;
 
-import java.util.Locale;
 import java.util.concurrent.ThreadFactory;
+import com.saasquatch.common.base.RSStrings;
 
 /**
  * A singleton <em>simple</em> {@link ThreadFactory}
@@ -13,14 +13,16 @@ enum RSSimpleThreadFactory implements ThreadFactory {
 
   DAEMON(true), NON_DAEMON(false),;
 
-  // Visible for testing
-  static final ThreadGroup threadGroup = new ThreadGroup(
-      String.format(Locale.ROOT, "%s.simpleThreadFactory", RSExecutors.class.getSimpleName()));
-
   private final boolean daemon;
+  // Visible for testing
+  final String baseName;
+  private final ThreadGroup threadGroup;
 
   RSSimpleThreadFactory(boolean daemon) {
     this.daemon = daemon;
+    this.baseName = RSStrings.format("%s.simpleThreadFactory(%sdaemon)",
+        RSExecutors.class.getSimpleName(), daemon ? "" : "non-");
+    this.threadGroup = new ThreadGroup(baseName);
   }
 
   @Override
@@ -33,6 +35,11 @@ enum RSSimpleThreadFactory implements ThreadFactory {
       t.setPriority(Thread.NORM_PRIORITY);
     }
     return t;
+  }
+
+  @Override
+  public String toString() {
+    return baseName;
   }
 
 }

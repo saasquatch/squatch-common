@@ -8,12 +8,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import org.junit.jupiter.api.Test;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class RSExecutorsTest {
 
-  private static final String threadFactoryName = RSSimpleThreadFactory.threadGroup.getName();
+  private static final Runnable EMPTY_RUNNABLE = () -> {
+  };
 
   @Test
   public void testThreadPerTaskExecutorWorks() {
@@ -28,12 +28,14 @@ public class RSExecutorsTest {
   @Test
   public void testThreadPerTaskExecutorThreadName() {
     CompletableFuture.runAsync(() -> {
-      assertEquals(threadFactoryName, Thread.currentThread().getThreadGroup().getName());
+      assertEquals(RSSimpleThreadFactory.DAEMON.baseName,
+          Thread.currentThread().getThreadGroup().getName());
       assertTrue(Thread.currentThread().getName()
           .startsWith("RSExecutors.threadPerTaskExecutor(daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(true)).join();
     CompletableFuture.runAsync(() -> {
-      assertEquals(threadFactoryName, Thread.currentThread().getThreadGroup().getName());
+      assertEquals(RSSimpleThreadFactory.NON_DAEMON.baseName,
+          Thread.currentThread().getThreadGroup().getName());
       assertTrue(Thread.currentThread().getName()
           .startsWith("RSExecutors.threadPerTaskExecutor(non-daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(false)).join();
@@ -43,14 +45,14 @@ public class RSExecutorsTest {
   public void testSimpleThreadFactoryWrapping() {
     {
       final Thread newThread =
-          RSExecutors.simpleThreadFactory(true).newThread(Runnables.doNothing());
+          RSExecutors.simpleThreadFactory(true).newThread(EMPTY_RUNNABLE);
       assertEquals("", newThread.getName());
     }
     {
       final ThreadFactory threadFactory = new ThreadFactoryBuilder()
           .setThreadFactory(RSExecutors.simpleThreadFactory(true)).setNameFormat("foo-%d").build();
-      final Thread newThread0 = threadFactory.newThread(Runnables.doNothing());
-      final Thread newThread1 = threadFactory.newThread(Runnables.doNothing());
+      final Thread newThread0 = threadFactory.newThread(EMPTY_RUNNABLE);
+      final Thread newThread1 = threadFactory.newThread(EMPTY_RUNNABLE);
       assertEquals("foo-0", newThread0.getName());
       assertEquals("foo-1", newThread1.getName());
     }
@@ -58,10 +60,10 @@ public class RSExecutorsTest {
 
   @Test
   public void testSimpleThreadFactoryDaemon() {
-    assertTrue(RSExecutors.simpleThreadFactory(true).newThread(Runnables.doNothing()).isDaemon());
-    assertFalse(RSExecutors.simpleThreadFactory(false).newThread(Runnables.doNothing()).isDaemon());
+    assertTrue(RSExecutors.simpleThreadFactory(true).newThread(EMPTY_RUNNABLE).isDaemon());
+    assertFalse(RSExecutors.simpleThreadFactory(false).newThread(EMPTY_RUNNABLE).isDaemon());
     assertTrue(new ThreadFactoryBuilder().setThreadFactory(RSExecutors.simpleThreadFactory(false))
-        .setDaemon(true).build().newThread(Runnables.doNothing()).isDaemon());
+        .setDaemon(true).build().newThread(EMPTY_RUNNABLE).isDaemon());
   }
 
   @Test
