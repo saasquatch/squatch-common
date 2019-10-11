@@ -42,20 +42,12 @@ public final class RSStrings {
       throw new IllegalArgumentException();
     if (s == null)
       return null;
-    final CharBuffer in = toCharBuffer(s);
+    final CharBuffer in = CharBuffer.wrap(s);
     final ByteBuffer out = ByteBuffer.allocate(maxBytes);
     final CharsetEncoder encoder = charset.newEncoder();
     encoder.encode(in, out, true);
     out.flip();
     return charset.decode(out).toString();
-  }
-
-  static CharBuffer toCharBuffer(@Nonnull CharSequence s) {
-    if (s instanceof CharBuffer) {
-      return (CharBuffer) s;
-    } else {
-      return CharBuffer.wrap(s);
-    }
   }
 
 }

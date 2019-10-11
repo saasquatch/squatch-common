@@ -194,7 +194,7 @@ public final class RSUrlCodec {
      * Do encoding for single-byte charsets that are supersets of ASCII
      */
     private String encodeSingleByte(@Nonnull CharSequence s) {
-      final ByteBuffer bytes = charset.encode(RSStrings.toCharBuffer(s));
+      final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
       // One byte can at most be turned into 3 chars
       final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
       while (bytes.hasRemaining()) {
@@ -218,7 +218,7 @@ public final class RSUrlCodec {
      * charsets, but it's not recommended because it's slower.
      */
     private String encodeMultiByte(@Nonnull CharSequence s) {
-      final CharBuffer chars = RSStrings.toCharBuffer(s);
+      final CharBuffer chars = CharBuffer.wrap(s);
       /*
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
        * depending on the charsets.
@@ -338,7 +338,7 @@ public final class RSUrlCodec {
      * URL decode
      */
     public String decode(@Nonnull CharSequence s) {
-      final CharBuffer chars = RSStrings.toCharBuffer(s);
+      final CharBuffer chars = CharBuffer.wrap(s);
       final CharBuffer resultBuf = CharBuffer.allocate(s.length());
       /*
        * Buffer used for decoding one set of % patterns. Assuming the entire input only consists of
