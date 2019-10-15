@@ -37,9 +37,16 @@ public class RSJacksonTest {
     final List<JsonNode> jsonNodes = generateJsonNodesList();
     final ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
     arrayNode.addAll(jsonNodes);
-    final ArrayNode collect = jsonNodes.stream()
-        .collect(RSJackson.toArrayNode());
-    assertEquals(arrayNode, collect);
+    {
+      final ArrayNode collect = jsonNodes.stream()
+          .collect(RSJackson.toArrayNode());
+      assertEquals(arrayNode, collect);
+    }
+    {
+      final ArrayNode collect = jsonNodes.parallelStream()
+          .collect(RSJackson.toArrayNode());
+      assertEquals(arrayNode, collect);
+    }
   }
 
   @Test
