@@ -29,14 +29,14 @@ public final class RSStrings {
   /**
    * Truncate a String to fit a UTF-8 bytes size
    */
-  public static String truncateToUtf8ByteSize(@Nullable CharSequence s, int maxBytes) {
+  public static String truncateToUtf8ByteSize(@Nullable String s, int maxBytes) {
     return truncateToByteSize(s, maxBytes, UTF_8);
   }
 
   /**
    * Truncate a String to fit a byte size for a {@link Charset}
    */
-  public static String truncateToByteSize(@Nullable CharSequence s, int maxBytes,
+  public static String truncateToByteSize(@Nullable String s, int maxBytes,
       @Nonnull Charset charset) {
     if (maxBytes < 0)
       throw new IllegalArgumentException();
@@ -47,7 +47,16 @@ public final class RSStrings {
     final CharsetEncoder encoder = charset.newEncoder();
     encoder.encode(in, out, true);
     out.flip();
-    return charset.decode(out).toString();
+    final CharBuffer decoded = charset.decode(out);
+    final int decodedLen = decoded.length();
+    if (decodedLen == 0) {
+      return "";
+    } else if (decodedLen == s.length()) {
+      // No need to make another copy if we don't need any truncation
+      return s;
+    } else {
+      return decoded.toString();
+    }
   }
 
 }
