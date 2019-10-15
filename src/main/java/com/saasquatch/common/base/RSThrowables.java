@@ -83,7 +83,9 @@ public final class RSThrowables {
    */
   public static <X extends Throwable> Optional<? extends X> findFirstInCauseChain(
       @Nonnull Throwable t, @Nonnull Class<? extends X> exceptionClass) {
-    return getCauseChainStream(t).filter(exceptionClass::isInstance).map(exceptionClass::cast)
+    return getCauseChainStream(t)
+        .filter(exceptionClass::isInstance)
+        .map(exceptionClass::cast)
         .findFirst();
   }
 
@@ -106,12 +108,15 @@ public final class RSThrowables {
   public static <X extends Throwable> void unwrapAndThrow(@Nonnull Throwable t,
       @Nonnull Class<? extends X> exceptionClass) throws X {
     final X ex = findFirstInCauseChain(t, exceptionClass).orElse(null);
-    if (ex != null)
+    if (ex != null) {
       throw ex;
+    }
   }
 
   /**
-   * Inspired by lang3 and jOOL.
+   * Inspired by lang3 and jOOL.<br>
+   * Throw the given {@link Throwable} if it's a {@link RuntimeException} or an {@link Error}, or
+   * wrap it with a {@link UndeclaredThrowableException} and throw it.
    */
   public static <R> R wrapAndThrow(@Nonnull final Throwable t) {
     Objects.requireNonNull(t);
