@@ -6,6 +6,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.Locale;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -38,10 +39,13 @@ public final class RSStrings {
    */
   public static String truncateToByteSize(@Nullable String s, int maxBytes,
       @Nonnull Charset charset) {
-    if (maxBytes < 0)
+    Objects.requireNonNull(charset);
+    if (maxBytes < 0) {
       throw new IllegalArgumentException();
-    if (s == null)
-      return null;
+    }
+    if (s == null || s.isEmpty()) {
+      return s;
+    }
     final CharBuffer in = CharBuffer.wrap(s);
     final ByteBuffer out = ByteBuffer.allocate(maxBytes);
     final CharsetEncoder encoder = charset.newEncoder();

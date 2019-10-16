@@ -49,11 +49,14 @@ public class RSStringsTest {
         "negative input should error");
     assertThrows(IllegalArgumentException.class, () -> RSStrings.truncateToUtf8ByteSize("", -1),
         "negative input should error");
+    assertThrows(NullPointerException.class, () -> RSStrings.truncateToByteSize("", 1, null));
+    assertThrows(NullPointerException.class, () -> RSStrings.truncateToByteSize(null, 1, null));
   }
 
   @Test
   public void testByteSizeTruncationMisc() {
     assertEquals("", RSStrings.truncateToUtf8ByteSize("???", 0));
+    assertEquals("", RSStrings.truncateToUtf8ByteSize("", 1));
     {
       final String s = "foo";
       assertEquals(s, RSStrings.truncateToUtf8ByteSize(s, 128));
