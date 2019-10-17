@@ -58,10 +58,10 @@ public final class RSFutures {
 
   private static CompletableFuture<?>[] toCfArray(
       @Nonnull final Collection<? extends CompletionStage<?>> promises) {
-    final CompletableFuture<?>[] cfArr = promises.stream()
+    final CompletableFuture<?>[] cfArray = promises.stream()
         .<CompletableFuture<?>>map(CompletionStage::toCompletableFuture)
         .toArray(CompletableFuture[]::new);
-    return cfArr;
+    return cfArray;
   }
 
   private static <V> List<V> sequenceHandlerAfterAllOf(

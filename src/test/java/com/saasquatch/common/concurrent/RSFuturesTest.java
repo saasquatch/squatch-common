@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 public class RSFuturesTest {
 
+  private static final Executor tptExecutor = RSExecutors.threadPerTaskExecutor(true);
   private static ScheduledExecutorService scheduledExecutor;
 
   @BeforeAll
@@ -41,12 +43,16 @@ public class RSFuturesTest {
   @Test
   public void testSequence() throws Exception {
     assertThrows(NullPointerException.class, () -> RSFutures.sequence(null));
+    assertThrows(NullPointerException.class,
+        () -> RSFutures.sequence(Collections.singletonList(null)));
     doTestSequence(RSFutures::sequence);
   }
 
   @Test
   public void testSequenceAsync() throws Exception {
     assertThrows(NullPointerException.class, () -> RSFutures.sequenceAsync(null));
+    assertThrows(NullPointerException.class,
+        () -> RSFutures.sequenceAsync(Collections.singletonList(null)));
     doTestSequence(RSFutures::sequenceAsync);
   }
 
@@ -54,7 +60,9 @@ public class RSFuturesTest {
   public void testSequenceAsyncExecutor() throws Exception {
     assertThrows(NullPointerException.class,
         () -> RSFutures.sequenceAsync(Collections.emptyList(), null));
-    assertThrows(NullPointerException.class, () -> RSFutures.sequenceAsync(null, Runnable::run));
+    assertThrows(NullPointerException.class, () -> RSFutures.sequenceAsync(null, tptExecutor));
+    assertThrows(NullPointerException.class,
+        () -> RSFutures.sequenceAsync(Collections.singletonList(null), tptExecutor));
     final ExecutorService executor = Executors.newFixedThreadPool(2);
     try {
       doTestSequence(promises -> RSFutures.sequenceAsync(promises, executor));
@@ -91,7 +99,7 @@ public class RSFuturesTest {
 
   @Test
   public void testSubmitAsyncExecutor() throws Exception {
-    assertThrows(NullPointerException.class, () -> RSFutures.submitAsync(null, Runnable::run));
+    assertThrows(NullPointerException.class, () -> RSFutures.submitAsync(null, tptExecutor));
     assertThrows(NullPointerException.class, () -> RSFutures.submitAsync(() -> null, null));
     final ExecutorService executor = Executors.newFixedThreadPool(2);
     try {
