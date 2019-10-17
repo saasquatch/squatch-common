@@ -17,8 +17,8 @@ public final class RSExecutors {
    * singleton {@link ThreadFactory} used only for tracking, always with
    * {@link Thread#NORM_PRIORITY}, and with the name for the threads always being {@code ""}. The
    * returning {@link ThreadFactory} is meant to be wrapped in another {@link ThreadFactory} like
-   * Guava's {@code ThreadFactoryBuilder} where you can specify whether you want daemon threads and
-   * your own thread name format.
+   * Guava's {@code ThreadFactoryBuilder} where you can specify your own thread name format, thread
+   * priority, etc.
    *
    * @return a singleton {@link ThreadFactory}
    */
