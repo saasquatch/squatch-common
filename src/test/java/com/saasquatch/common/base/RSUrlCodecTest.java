@@ -189,7 +189,7 @@ public class RSUrlCodecTest {
     final RSUrlCodec.Encoder neverEncodeEncoder =
         RSUrlCodec.getEncoder().withSafeCharPredicate(_i -> true).encodeSpaceToPlus(false);
     for (int i = 0; i < 256; i++) {
-      final String fakeString = RandomStringUtils.randomAlphanumeric(1024);
+      final String fakeString = RandomStringUtils.random(1024);
       final String encoded = neverEncodeEncoder.encode(fakeString);
       assertEquals(fakeString, encoded);
     }

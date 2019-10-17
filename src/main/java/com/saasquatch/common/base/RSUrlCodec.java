@@ -90,16 +90,16 @@ public final class RSUrlCodec {
   public static final class Encoder {
 
     /**
-     * A {@link Set} of single-byte {@link Charset}s. It's not necessarily an exhaustive list and
-     * it's only used for optimization.
+     * A {@link Set} {@link Charset}s that are supersets of ASCII. It's not necessarily an
+     * exhaustive list and it's only used for optimization.
      */
-    private static final Set<Charset> SINGLE_BYTE_CHARSETS =
+    private static final Set<Charset> SINGLE_BYTE_ASCII_SUPERSETS =
         Stream.of(UTF_8, US_ASCII, ISO_8859_1).collect(RSCollectors.toUnmodifiableSet());
 
     private static final Encoder RFC3986 =
-        new Encoder(UTF_8, RSUrlCodec::isRFC3986Unreseved, false, true);
+        new Encoder(UTF_8, InternalSafeCharPredicate.RFC3986, false, true);
     private static final Encoder FORM =
-        new Encoder(UTF_8, RSUrlCodec::isWwwFormUrlSafe, true, true);
+        new Encoder(UTF_8, InternalSafeCharPredicate.FORM, true, true);
 
     private final Charset charset;
     private final IntPredicate safeCharPredicate;
@@ -139,6 +139,7 @@ public final class RSUrlCodec {
      */
     public Encoder withSafeCharPredicate(@Nonnull IntPredicate safeCharPredicate) {
       Objects.requireNonNull(safeCharPredicate);
+      // When a custom safeCharPredicate is provided, stop assuming optimal
       return new Encoder(this.charset, safeCharPredicate, this.spaceToPlus, this.upperCase);
     }
 
@@ -183,17 +184,25 @@ public final class RSUrlCodec {
      * URL encode
      */
     public String encode(@Nonnull CharSequence s) {
-      if (SINGLE_BYTE_CHARSETS.contains(charset)) {
-        return encodeSingleByte(s);
+      // Only trust InternalSafeCharPredicate
+      if (SINGLE_BYTE_ASCII_SUPERSETS.contains(charset)
+          && safeCharPredicate instanceof InternalSafeCharPredicate) {
+        return encodeOptimal(s);
       } else {
-        return encodeMultiByte(s);
+        return encodeNonOptimal(s);
       }
     }
 
     /**
-     * Do encoding for single-byte charsets that are supersets of ASCII
+     * A highly optimized version of doing URL encoding that only works if:
+     * <ul>
+     * <li>The {@link Charset} is single-byte and is a superset of ASCII</li>
+     * <li>The safeCharPredicate always encodes non-ASCII characters</li>
+     * </ul>
+     * If any of the conditions above is not met, this method does not work. Instead,
+     * {@link #encodeNonOptimal(CharSequence)}, which is slightly slower, should be used.
      */
-    private String encodeSingleByte(@Nonnull CharSequence s) {
+    private String encodeOptimal(@Nonnull CharSequence s) {
       final ByteBuffer bytes = charset.encode(CharBuffer.wrap(s));
       // One byte can at most be turned into 3 chars
       final CharBuffer resultBuf = CharBuffer.allocate(bytes.remaining() * 3);
@@ -214,10 +223,12 @@ public final class RSUrlCodec {
     }
 
     /**
-     * Do encoding for multi-byte charsets. Note that this method is capable of handling single-byte
-     * charsets, but it's not recommended because it's slower.
+     * A more compatible and resilient version of doing URL encoding that handles weird
+     * {@link Charset}s and safeCharPredicates that are not standards compliant.
+     *
+     * @see #encodeOptimal(CharSequence)
      */
-    private String encodeMultiByte(@Nonnull CharSequence s) {
+    private String encodeNonOptimal(@Nonnull CharSequence s) {
       final CharBuffer chars = CharBuffer.wrap(s);
       /*
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
@@ -252,9 +263,7 @@ public final class RSUrlCodec {
           } while (chars.hasRemaining());
           // Encode the sequence together
           encBuf.flip();
-          final ByteBuffer encBytes = charset.encode(encBuf);
-          while (encBytes.hasRemaining()) {
-            final int b = encBytes.get()/* & 0xFF */;
+          for (final byte b : encBuf.toString().getBytes(charset)) {
             resultBuf.append('%');
             resultBuf.append(hexDigit(b >> 4, upperCase));
             resultBuf.append(hexDigit(b, upperCase));
@@ -430,12 +439,22 @@ public final class RSUrlCodec {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
   }
 
-  private static boolean isWwwFormUrlSafe(int c) {
-    return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '*';
-  }
+  private static enum InternalSafeCharPredicate implements IntPredicate {
 
-  private static boolean isRFC3986Unreseved(int c) {
-    return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '~';
+    RFC3986 {
+      @Override
+      public boolean test(int c) {
+        return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '~';
+      }
+    },
+
+    FORM {
+      @Override
+      public boolean test(int c) {
+        return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '*';
+      }
+    },;
+
   }
 
 }
