@@ -97,9 +97,9 @@ public final class RSUrlCodec {
         Stream.of(UTF_8, US_ASCII, ISO_8859_1).collect(RSCollectors.toUnmodifiableSet());
 
     private static final Encoder RFC3986 =
-        new Encoder(UTF_8, InternalSafeCharPredicate.RFC3986, false, true);
+        new Encoder(UTF_8, InternalSafeCharPredicate.RFC3986_UNRESERVED, false, true);
     private static final Encoder FORM =
-        new Encoder(UTF_8, InternalSafeCharPredicate.FORM, true, true);
+        new Encoder(UTF_8, InternalSafeCharPredicate.WWW_FORM_URLENCODED, true, true);
 
     private final Charset charset;
     private final IntPredicate safeCharPredicate;
@@ -441,14 +441,14 @@ public final class RSUrlCodec {
 
   private static enum InternalSafeCharPredicate implements IntPredicate {
 
-    RFC3986 {
+    RFC3986_UNRESERVED {
       @Override
       public boolean test(int c) {
         return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '~';
       }
     },
 
-    FORM {
+    WWW_FORM_URLENCODED {
       @Override
       public boolean test(int c) {
         return isAsciiAlphaNum(c) || c == '-' || c == '_' || c == '.' || c == '*';
