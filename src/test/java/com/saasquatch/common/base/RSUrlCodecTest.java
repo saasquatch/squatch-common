@@ -41,6 +41,7 @@ public class RSUrlCodecTest {
     for (int i = 0; i < 128; i++) {
       final String alhpanum = RandomStringUtils.randomAlphanumeric(100);
       assertEquals(alhpanum, RSUrlCodec.encode(alhpanum));
+      assertEquals(alhpanum, RSUrlCodec.getFormEncoder().encode(alhpanum));
     }
   }
 
