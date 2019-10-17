@@ -27,7 +27,7 @@ public final class RSFutures {
   public static <V> CompletionStage<List<V>> sequence(
       @Nonnull final Collection<? extends CompletionStage<? extends V>> promises) {
     Objects.requireNonNull(promises);
-    final CompletableFuture<? extends V>[] cfArray = toCfArray(promises);
+    final CompletableFuture<?>[] cfArray = toCfArray(promises);
     return CompletableFuture.allOf(cfArray)
         .thenApply(ignored -> sequenceHandlerAfterAllOf(cfArray));
   }
@@ -38,7 +38,7 @@ public final class RSFutures {
   public static <V> CompletionStage<List<V>> sequenceAsync(
       @Nonnull final Collection<? extends CompletionStage<? extends V>> promises) {
     Objects.requireNonNull(promises);
-    final CompletableFuture<? extends V>[] cfArray = toCfArray(promises);
+    final CompletableFuture<?>[] cfArray = toCfArray(promises);
     return CompletableFuture.allOf(cfArray)
         .thenApplyAsync(ignored -> sequenceHandlerAfterAllOf(cfArray));
   }
@@ -51,28 +51,31 @@ public final class RSFutures {
       @Nonnull final Executor executor) {
     Objects.requireNonNull(promises);
     Objects.requireNonNull(executor);
-    final CompletableFuture<? extends V>[] cfArray = toCfArray(promises);
+    final CompletableFuture<?>[] cfArray = toCfArray(promises);
     return CompletableFuture.allOf(cfArray)
         .thenApplyAsync(ignored -> sequenceHandlerAfterAllOf(cfArray), executor);
   }
 
-  private static <V> CompletableFuture<V>[] toCfArray(
-      @Nonnull final Collection<? extends CompletionStage<V>> promises) {
-    @SuppressWarnings("unchecked")
-    final CompletableFuture<V>[] cfArr = promises.stream()
-        .<CompletableFuture<V>>map(CompletionStage::toCompletableFuture)
+  private static CompletableFuture<?>[] toCfArray(
+      @Nonnull final Collection<? extends CompletionStage<?>> promises) {
+    final CompletableFuture<?>[] cfArr = promises.stream()
+        .<CompletableFuture<?>>map(CompletionStage::toCompletableFuture)
         .toArray(CompletableFuture[]::new);
     return cfArr;
   }
 
   private static <V> List<V> sequenceHandlerAfterAllOf(
-      @Nonnull CompletableFuture<? extends V>[] promises) {
+      @Nonnull CompletableFuture<?>[] promises) {
     return Arrays.stream(promises)
         /*
          * By the time join gets called, all the promises are guaranteed to have completed, so this
          * will not block a thread.
          */
-        .map(CompletableFuture::join)
+        .map(cf -> {
+          @SuppressWarnings("unchecked")
+          final V val = (V) cf.join();
+          return val;
+        })
         .collect(RSCollectors.toUnmodifiableList());
   }
 
