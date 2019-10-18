@@ -234,9 +234,9 @@ public final class RSUrlCodec {
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
        * depending on the charsets.
        */
-      final StringBuilder resultBuf = new StringBuilder(chars.remaining() * 3);
+      final StringBuilder resultBuf = new StringBuilder(chars.remaining());
       // The buffer used for encoding sequences. It will be reused for all the encoding sequences.
-      final CharBuffer encBuf = CharBuffer.allocate(chars.remaining());
+      final StringBuilder encBuf = new StringBuilder();
       while (chars.hasRemaining()) {
         final char c = chars.get();
         if (safeCharPredicate.test(c)) {
@@ -252,17 +252,16 @@ public final class RSUrlCodec {
            */
           chars.position(chars.position() - 1);
           // Clear the buffer
-          encBuf.clear();
+          encBuf.setLength(0);
           encSequenceLoop: do {
             final char encChar = chars.get();
             if (safeCharPredicate.test(encChar) || (spaceToPlus && encChar == ' ')) {
               chars.position(chars.position() - 1);
               break encSequenceLoop;
             }
-            encBuf.put(encChar);
+            encBuf.append(encChar);
           } while (chars.hasRemaining());
           // Encode the sequence together
-          encBuf.flip();
           for (final byte b : encBuf.toString().getBytes(charset)) {
             resultBuf.append('%');
             resultBuf.append(hexDigit(b >> 4, upperCase));
