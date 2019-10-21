@@ -69,7 +69,7 @@ public final class RSCollectors {
    * @see Collectors#toSet()
    */
   public static <T, S extends Set<T>> Collector<T, ?, Set<T>> toUnmodifiableSet(
-      @Nonnull final Supplier<S> setSupplier) {
+      @Nonnull Supplier<S> setSupplier) {
     return Collectors.collectingAndThen(Collectors.toCollection(setSupplier),
         RSCollectors::unmodifiableSetFinisher);
   }
@@ -79,7 +79,7 @@ public final class RSCollectors {
    * <em>likely</em> backed by an {@link EnumSet}.
    */
   public static <T extends Enum<T>> Collector<T, ?, Set<T>> toUnmodifiableEnumSet(
-      @Nonnull final Class<T> clazz) {
+      @Nonnull Class<T> clazz) {
     return toUnmodifiableSet(() -> EnumSet.noneOf(clazz));
   }
 
@@ -88,7 +88,7 @@ public final class RSCollectors {
    * is empty, then your {@link Set} will not be used.
    */
   public static <T, S extends SortedSet<T>> Collector<T, ?, SortedSet<T>> toUnmodifiableSortedSet(
-      @Nonnull final Supplier<S> sortedSetSupplier) {
+      @Nonnull Supplier<S> sortedSetSupplier) {
     return Collectors.collectingAndThen(Collectors.toCollection(sortedSetSupplier),
         s -> {
           switch (s.size()) {
@@ -105,7 +105,7 @@ public final class RSCollectors {
    * result is empty, then your {@link Set} will not be used.
    */
   public static <T, S extends NavigableSet<T>> Collector<T, ?, NavigableSet<T>> toUnmodifiableNavigableSet(
-      @Nonnull final Supplier<S> navigableSetSupplier) {
+      @Nonnull Supplier<S> navigableSetSupplier) {
     return Collectors.collectingAndThen(Collectors.toCollection(navigableSetSupplier),
         s -> {
           switch (s.size()) {
@@ -123,8 +123,8 @@ public final class RSCollectors {
    * @see Collectors#toMap(Function, Function)
    */
   public static <T, K, U> Collector<T, ?, Map<K, U>> toUnmodifiableMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper) {
     return Collectors.collectingAndThen(Collectors.toMap(keyMapper, valueMapper),
         RSCollectors::unmodifiableMapFinisher);
   }
@@ -134,9 +134,9 @@ public final class RSCollectors {
    * with {@link HashMap}.
    */
   public static <T, K, U> Collector<T, ?, Map<K, U>> toUnmodifiableMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper,
-      @Nonnull final BinaryOperator<U> mergeFunction) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper,
+      @Nonnull BinaryOperator<U> mergeFunction) {
     return Collectors.collectingAndThen(Collectors.toMap(keyMapper, valueMapper, mergeFunction),
         RSCollectors::unmodifiableMapFinisher);
   }
@@ -150,9 +150,9 @@ public final class RSCollectors {
    * @see #throwingMerger()
    */
   public static <T, K, U, M extends Map<K, U>> Collector<T, ?, Map<K, U>> toUnmodifiableMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper,
-      @Nonnull final BinaryOperator<U> mergeFunction, @Nonnull final Supplier<M> mapSupplier) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper,
+      @Nonnull BinaryOperator<U> mergeFunction, @Nonnull Supplier<M> mapSupplier) {
     return Collectors.collectingAndThen(
         Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier),
         RSCollectors::unmodifiableMapFinisher);
@@ -163,8 +163,8 @@ public final class RSCollectors {
    * <em>likely</em> backed by an {@link EnumMap}.
    */
   public static <T, K extends Enum<K>, U> Collector<T, ?, Map<K, U>> toUnmodifiableEnumMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper, @Nonnull final Class<K> clazz) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper, @Nonnull Class<K> clazz) {
     return toUnmodifiableMap(keyMapper, valueMapper, throwingMerger(), () -> new EnumMap<>(clazz));
   }
 
@@ -176,9 +176,9 @@ public final class RSCollectors {
    * @see #throwingMerger()
    */
   public static <T, K, U, M extends SortedMap<K, U>> Collector<T, ?, SortedMap<K, U>> toUnmodifiableSortedMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper,
-      @Nonnull final BinaryOperator<U> mergeFunction, @Nonnull final Supplier<M> mapSupplier) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper,
+      @Nonnull BinaryOperator<U> mergeFunction, @Nonnull Supplier<M> mapSupplier) {
     return Collectors.collectingAndThen(
         Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier),
         m -> {
@@ -199,9 +199,9 @@ public final class RSCollectors {
    * @see #throwingMerger()
    */
   public static <T, K, U, M extends NavigableMap<K, U>> Collector<T, ?, NavigableMap<K, U>> toUnmodifiableNavigableMap(
-      @Nonnull final Function<? super T, ? extends K> keyMapper,
-      @Nonnull final Function<? super T, ? extends U> valueMapper,
-      @Nonnull final BinaryOperator<U> mergeFunction, @Nonnull final Supplier<M> mapSupplier) {
+      @Nonnull Function<? super T, ? extends K> keyMapper,
+      @Nonnull Function<? super T, ? extends U> valueMapper,
+      @Nonnull BinaryOperator<U> mergeFunction, @Nonnull Supplier<M> mapSupplier) {
     return Collectors.collectingAndThen(
         Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier),
         m -> {
@@ -224,7 +224,7 @@ public final class RSCollectors {
     };
   }
 
-  private static <T> Set<T> unmodifiableSetFinisher(@Nonnull final Set<? extends T> s) {
+  private static <T> Set<T> unmodifiableSetFinisher(@Nonnull Set<? extends T> s) {
     switch (s.size()) {
       case 0:
         return Collections.emptySet();
@@ -236,7 +236,7 @@ public final class RSCollectors {
   }
 
   private static <K, U> Map<K, U> unmodifiableMapFinisher(
-      @Nonnull final Map<? extends K, ? extends U> m) {
+      @Nonnull Map<? extends K, ? extends U> m) {
     switch (m.size()) {
       case 0:
         return Collections.emptyMap();
