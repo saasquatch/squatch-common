@@ -164,14 +164,19 @@ public class RSUrlCodecTest {
     testFormCompatibility(UTF_16BE);
     testFormCompatibility(UTF_16LE);
     try {
+      testFormCompatibility(Charset.forName("windows-1252"));
+    } catch (UnsupportedCharsetException e) {
+      System.out.println("windows-1252 not supported. Skipping tests.");
+    }
+    try {
       testFormCompatibility(Charset.forName("UTF-32BE"));
     } catch (UnsupportedCharsetException e) {
-      System.out.println("UTF-32 unsupported. Skipping tests.");
+      System.out.println("UTF-32 not supported. Skipping tests.");
     }
     try {
       testFormCompatibility(Charset.forName("UTF-32LE"));
     } catch (UnsupportedCharsetException e) {
-      System.out.println("UTF-32 unsupported. Skipping tests.");
+      System.out.println("UTF-32 not supported. Skipping tests.");
     }
   }
 
@@ -341,7 +346,7 @@ public class RSUrlCodecTest {
       try {
         utf32be = Charset.forName("UTF-32BE");
       } catch (UnsupportedCharsetException e) {
-        System.out.println("UTF-32 unsupported. Skipping tests.");
+        System.out.println("UTF-32 not supported. Skipping tests.");
         break testUtf32be;
       }
       final String original = "óòñ(╯°□°)╯ā︵ ┻━┻😂😂😂ā";
