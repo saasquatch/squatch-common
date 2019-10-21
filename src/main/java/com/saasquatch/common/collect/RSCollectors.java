@@ -137,7 +137,8 @@ public final class RSCollectors {
       @Nonnull final Function<? super T, ? extends K> keyMapper,
       @Nonnull final Function<? super T, ? extends U> valueMapper,
       @Nonnull final BinaryOperator<U> mergeFunction) {
-    return toUnmodifiableMap(keyMapper, valueMapper, mergeFunction, HashMap::new);
+    return Collectors.collectingAndThen(Collectors.toMap(keyMapper, valueMapper, mergeFunction),
+        RSCollectors::unmodifiableMapFinisher);
   }
 
   /**
