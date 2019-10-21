@@ -236,8 +236,11 @@ public class RSCollectorsTest {
         .collect(RSCollectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     final Map<String, String> collect2 = original.entrySet().stream()
         .collect(RSCollectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue,
+            RSCollectors.throwingMerger()));
+    final Map<String, String> collect3 = original.entrySet().stream()
+        .collect(RSCollectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue,
             RSCollectors.throwingMerger(), TreeMap::new));
-    for (Map<String, String> collect : Arrays.asList(collect1, collect2)) {
+    for (Map<String, String> collect : Arrays.asList(collect1, collect2, collect3)) {
       assertEquals(original, collect);
       assertThrows(UnsupportedOperationException.class, collect::clear,
           "The result should be unmodifiable");

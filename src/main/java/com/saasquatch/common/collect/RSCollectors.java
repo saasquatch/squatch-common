@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -19,7 +20,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 /**
- * Better {@link Collector}s than the ones in {@link Collectors}.
+ * Better {@link Collector}s than the ones in {@link Collectors}. If you have the option of using
+ * Guava's immutable collectors or some of the new methods in {@link Collectors} in newer Java
+ * versions, some of the methods in this class can be considered deprecated.
  *
  * @author sli
  */
@@ -125,6 +128,17 @@ public final class RSCollectors {
   }
 
   /**
+   * Convenience method for {@link #toUnmodifiableMap(Function, Function, BinaryOperator, Supplier)}
+   * with {@link HashMap}.
+   */
+  public static <T, K, U> Collector<T, ?, Map<K, U>> toUnmodifiableMap(
+      @Nonnull final Function<? super T, ? extends K> keyMapper,
+      @Nonnull final Function<? super T, ? extends U> valueMapper,
+      @Nonnull final BinaryOperator<U> mergeFunction) {
+    return toUnmodifiableMap(keyMapper, valueMapper, mergeFunction, HashMap::new);
+  }
+
+  /**
    * {@link Collector} that collects elements into an unmodifiable {@link Map}, where you can
    * specify the underlying {@link Map}. If the result is empty or has one entry, then your
    * {@link Map} will not be used.
@@ -207,7 +221,7 @@ public final class RSCollectors {
     };
   }
 
-  private static <T> Set<T> unmodifiableSetFinisher(@Nonnull final Set<T> s) {
+  private static <T> Set<T> unmodifiableSetFinisher(@Nonnull final Set<? extends T> s) {
     switch (s.size()) {
       case 0:
         return Collections.emptySet();
