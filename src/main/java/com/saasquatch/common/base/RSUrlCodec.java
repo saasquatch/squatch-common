@@ -234,7 +234,7 @@ public final class RSUrlCodec {
        * Not using CharBuffer since it's hard to predict how many characters we will end up having
        * depending on the charsets.
        */
-      final StringBuilder resultBuf = new StringBuilder(chars.remaining());
+      final StringBuilder resultBuf = new StringBuilder(chars.remaining() << 1);
       // The buffer used for encoding sequences. It will be reused for all the encoding sequences.
       final StringBuilder encBuf = new StringBuilder();
       while (chars.hasRemaining()) {
