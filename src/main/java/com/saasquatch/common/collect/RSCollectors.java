@@ -1,6 +1,6 @@
 package com.saasquatch.common.collect;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -36,16 +36,18 @@ public final class RSCollectors {
    * @see Collectors#toList()
    */
   public static <T> Collector<T, ?, List<T>> toUnmodifiableList() {
-    return Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new),
-        (ArrayList<T> l) -> {
+    return Collectors.collectingAndThen(Collectors.toList(),
+        l -> {
           switch (l.size()) {
             case 0:
               return Collections.emptyList();
             case 1:
               return Collections.singletonList(l.get(0));
-            default:
-              l.trimToSize();
-              return Collections.unmodifiableList(l);
+            default: {
+              @SuppressWarnings("unchecked")
+              final List<T> trimmedCopy = (List<T>) Arrays.asList(l.toArray());
+              return Collections.unmodifiableList(trimmedCopy);
+            }
           }
         });
   }
@@ -237,9 +239,10 @@ public final class RSCollectors {
     switch (m.size()) {
       case 0:
         return Collections.emptyMap();
-      case 1:
+      case 1: {
         final Map.Entry<? extends K, ? extends U> firstEntry = m.entrySet().iterator().next();
         return Collections.singletonMap(firstEntry.getKey(), firstEntry.getValue());
+      }
       default:
         return Collections.unmodifiableMap(m);
     }
