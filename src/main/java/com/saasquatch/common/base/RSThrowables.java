@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Spliterator;
@@ -161,33 +162,43 @@ public final class RSThrowables {
   private static class CauseChainIterator implements Iterator<Throwable> {
 
     private int count = 0;
-    private Throwable next;
     private Throwable curr;
     private final int limit;
 
     CauseChainIterator(Throwable t, int limit) {
-      this.next = t;
       this.limit = limit;
+      this.curr = t;
     }
 
     @Override
     public boolean hasNext() {
-      if (limit > 0 && count >= limit) {
-        return false;
-      }
-      if (count == 0) {
-        // The root is always available
-        return true;
-      }
-      return next != null && next != curr && !next.equals(curr);
+      return curr != null;
     }
 
     @Override
     public Throwable next() {
-      count++;
-      curr = next;
-      next = next.getCause();
-      return curr;
+      if (curr == null) {
+        throw new NoSuchElementException();
+      }
+      try {
+        return curr;
+      } finally {
+        _next();
+      }
+    }
+
+    private void _next() {
+      final Throwable cause = curr.getCause();
+      if (limit > 0 && ++count >= limit) {
+        // We hit the arbitrary limit. The chain ends here.
+        curr = null;
+      } else if (cause == null || curr == cause || curr.equals(cause)) {
+        // curr does not have a cause or curr is the same as its cause. The chain ends here.
+        curr = null;
+      } else {
+        // curr has a legitimate cause. Advance to the cause.
+        curr = cause;
+      }
     }
 
   }

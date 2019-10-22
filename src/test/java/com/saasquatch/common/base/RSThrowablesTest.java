@@ -12,7 +12,9 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -34,6 +36,13 @@ public class RSThrowablesTest {
     assertEquals(Arrays.asList(e5, e4, e3, e2, e1, e0), basicCauseChain);
     final Iterable<Throwable> causeChainIterable = RSThrowables.getCauseChain(e5);
     assertEquals(basicCauseChain, ImmutableList.copyOf(causeChainIterable));
+    {
+      final Iterator<Throwable> causeChainIterator = causeChainIterable.iterator();
+      for (int i = 0; i < 6; i++) {
+        causeChainIterator.next(); // This shouldn't error
+      }
+      assertThrows(NoSuchElementException.class, causeChainIterator::next);
+    }
     final List<Throwable> causeChainListFromStream =
         RSThrowables.getCauseChainStream(e5).collect(Collectors.toList());
     assertEquals(basicCauseChain, causeChainListFromStream);
@@ -62,9 +71,22 @@ public class RSThrowablesTest {
   @Test
   public void testCauseChainLimit() {
     final FakeCauseRuntimeException fakeException = new FakeCauseRuntimeException();
-    // We shouldn't get an infinite loop
-    final List<Throwable> causeChain = RSThrowables.getCauseChainList(fakeException);
-    assertEquals(RSThrowables.DEFAULT_CAUSE_CHAIN_LIMIT, causeChain.size());
+    {
+      // We shouldn't get an infinite loop
+      final List<Throwable> causeChain = RSThrowables.getCauseChainList(fakeException);
+      assertEquals(RSThrowables.DEFAULT_CAUSE_CHAIN_LIMIT, causeChain.size());
+    }
+    for (int i = 1; i < 128; i++) {
+      assertEquals(i, RSThrowables.getCauseChainList(fakeException, i).size());
+    }
+    {
+      final Iterator<Throwable> causeChain = RSThrowables.getCauseChain(fakeException, 3).iterator();
+      // The following next() calls shouldn't throw an Exception
+      causeChain.next();
+      causeChain.next();
+      causeChain.next();
+      assertThrows(NoSuchElementException.class, causeChain::next);
+    }
   }
 
   @Test
