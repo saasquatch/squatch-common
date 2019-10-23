@@ -28,14 +28,10 @@ public class RSExecutorsTest {
   @Test
   public void testThreadPerTaskExecutorThreadName() {
     CompletableFuture.runAsync(() -> {
-      assertEquals(RSSimpleThreadFactory.DAEMON.baseName,
-          Thread.currentThread().getThreadGroup().getName());
       assertTrue(Thread.currentThread().getName()
           .startsWith("RSExecutors.threadPerTaskExecutor(daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(true)).join();
     CompletableFuture.runAsync(() -> {
-      assertEquals(RSSimpleThreadFactory.NON_DAEMON.baseName,
-          Thread.currentThread().getThreadGroup().getName());
       assertTrue(Thread.currentThread().getName()
           .startsWith("RSExecutors.threadPerTaskExecutor(non-daemon)-"));
     }, RSExecutors.threadPerTaskExecutor(false)).join();

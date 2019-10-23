@@ -16,18 +16,16 @@ enum RSSimpleThreadFactory implements ThreadFactory {
   private final boolean daemon;
   // Visible for testing
   final String baseName;
-  private final ThreadGroup threadGroup;
 
   RSSimpleThreadFactory(boolean daemon) {
     this.daemon = daemon;
     this.baseName = RSStrings.format("%s.simpleThreadFactory(%sdaemon)",
         RSExecutors.class.getSimpleName(), daemon ? "" : "non-");
-    this.threadGroup = new ThreadGroup(baseName);
   }
 
   @Override
   public Thread newThread(Runnable r) {
-    final Thread t = new Thread(threadGroup, r, "");
+    final Thread t = new Thread(r, "");
     if (t.isDaemon() != daemon) {
       t.setDaemon(daemon);
     }
