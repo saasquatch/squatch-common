@@ -11,6 +11,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import com.saasquatch.common.base.RSThrowables;
 
+/**
+ * Utilities for {@link Thread}s and related stuff
+ *
+ * @author sli
+ */
 public final class RSThreads {
 
   private RSThreads() {}
@@ -19,8 +24,8 @@ public final class RSThreads {
   static Field threadLocalsField;
 
   /**
-   * The threadLocals field on a {@link Thread} object. We want to nuke this field after execution
-   * to prevent memory leaks caused by {@link ThreadLocal}s.
+   * Clear the threadLocals field on a {@link Thread} object using reflection. May be used for
+   * preventing memory leaks caused by 3rd party libraries abusing {@link ThreadLocal}s.
    */
   public static void clearThreadLocals(@Nonnull Thread t) {
     Objects.requireNonNull(t);
