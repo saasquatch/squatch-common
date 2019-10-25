@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 /**
  * Similar to {@link ThreadLocalRandom}, but returns {@link SecureRandom}s. This class by default
  * does not use the default constructor of {@link SecureRandom}. Instead, it tries to create
- * <em>potentially faster</em> {@link SecureRandom} by trying faster algorithms and fallback to the
+ * <em>potentially faster</em> {@link SecureRandom}s by trying faster algorithms and fallback to the
  * default constructor.
  *
  * @author sli
