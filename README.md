@@ -3,8 +3,6 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/saasquatch/squatch-common.svg?branch=master)](https://travis-ci.org/saasquatch/squatch-common)
 [![codecov](https://codecov.io/gh/saasquatch/squatch-common/branch/master/graph/badge.svg)](https://codecov.io/gh/saasquatch/squatch-common)
-[![](https://jitci.com/gh/saasquatch/squatch-common/svg)](https://jitci.com/gh/saasquatch/squatch-common)
-[![](https://jitpack.io/v/saasquatch/squatch-common.svg)](https://jitpack.io/#saasquatch/squatch-common)
 
 SaaSquatch utility libraries for Java
 
@@ -12,30 +10,61 @@ This library aims to provide common utilites that are missing from other common 
 
 ## Adding squatch-common to your project
 
-squatch-common is hosted on JitPack.
+### Add the repository
 
-Add JitPack repository:
+Maven
 
 ```xml
 <repositories>
   <repository>
-    <id>jitpack.io</id>
-    <url>https://jitpack.io</url>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+    <id>bintray-saasquatch-java-libs</id>
+    <name>bintray</name>
+    <url>https://dl.bintray.com/saasquatch/java-libs</url>
   </repository>
 </repositories>
+<pluginRepositories>
+  <pluginRepository>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+    <id>bintray-saasquatch-java-libs</id>
+    <name>bintray-plugins</name>
+    <url>https://dl.bintray.com/saasquatch/java-libs</url>
+  </pluginRepository>
+</pluginRepositories>
 ```
 
-Add the dependency:
+Gradle
+
+```gradle
+repositories {
+  maven {
+    url  "https://dl.bintray.com/saasquatch/java-libs"
+  }
+}
+```
+
+### Add the dependency
+
+Maven
 
 ```xml
 <dependency>
-  <groupId>com.github.saasquatch</groupId>
+  <groupId>com.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
-  <version>0.0.17</version>
+  <version>0.1.0-alpha-1</version>
+  <type>pom</type>
 </dependency>
 ```
 
-For more information and other built tools, [please refer to the JitPack page](https://jitpack.io/#saasquatch/squatch-common).
+Gradle
+
+```gradle
+compile 'com.saasquatch:squatch-common:0.1.0-alpha-1'
+```
 
 ## LICENSE
 
