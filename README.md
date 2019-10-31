@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/saasquatch/squatch-common.svg?branch=master)](https://travis-ci.org/saasquatch/squatch-common)
 [![codecov](https://codecov.io/gh/saasquatch/squatch-common/branch/master/graph/badge.svg)](https://codecov.io/gh/saasquatch/squatch-common)
+[ ![Download](https://api.bintray.com/packages/saasquatch/java-libs/squatch-common/images/download.svg) ](https://bintray.com/saasquatch/java-libs/squatch-common/_latestVersion)
 
 SaaSquatch utility libraries for Java
 
