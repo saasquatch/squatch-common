@@ -56,7 +56,7 @@ Maven
 <dependency>
   <groupId>com.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
-  <version>0.1.0-alpha-1</version>
+  <version>0.1.0-alpha-2</version>
   <type>pom</type>
 </dependency>
 ```
@@ -64,7 +64,7 @@ Maven
 Gradle
 
 ```gradle
-compile 'com.saasquatch:squatch-common:0.1.0-alpha-1'
+compile 'com.saasquatch:squatch-common:0.1.0-alpha-2'
 ```
 
 ## LICENSE
