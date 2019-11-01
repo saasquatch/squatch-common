@@ -57,7 +57,6 @@ Maven
   <groupId>com.saasquatch</groupId>
   <artifactId>squatch-common</artifactId>
   <version>0.1.0-alpha-2</version>
-  <type>pom</type>
 </dependency>
 ```
 
