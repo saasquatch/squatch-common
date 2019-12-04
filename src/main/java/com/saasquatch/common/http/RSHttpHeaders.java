@@ -1,7 +1,6 @@
 package com.saasquatch.common.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import java.nio.charset.Charset;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.Base64;
@@ -13,7 +12,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import com.saasquatch.common.collect.RSCollectors;
 
@@ -58,18 +56,10 @@ public final class RSHttpHeaders {
    * Generate a Basic Authorization header with UTF-8 encoding
    */
   public static String basicAuth(@Nullable String username, @Nullable String password) {
-    return basicAuth(username, password, UTF_8);
-  }
-
-  /**
-   * Generate a Basic Authorization header
-   */
-  public static String basicAuth(@Nullable String username, @Nullable String password,
-      @Nonnull Charset charset) {
     final byte[] userPassBytes = Stream.of(username, password)
         .map(s -> s == null ? "" : s)
         .collect(Collectors.joining(":"))
-        .getBytes(charset);
+        .getBytes(UTF_8);
     return BASIC_PREFIX + Base64.getEncoder().encodeToString(userPassBytes);
   }
 
